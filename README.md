@@ -28,7 +28,3 @@ An enterprise workforce management platform with an AI Operations Assistant.
 - Asset Tracking
 - AI Assistant
 - Reports & Analytics
-
-## Status
-
-🚧 Planning Phase
