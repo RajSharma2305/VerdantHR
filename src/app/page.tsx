@@ -8,6 +8,7 @@ import {
   Send, Bot, Shield, Search, 
   Sparkles, LogOut, MapPin, Loader2, ArrowRight
 } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 // Predefined roles for simulated RBAC testing
 const AVAILABLE_ROLES = [
@@ -128,26 +129,26 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/40">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-brand-green/15">
       {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md">
         <div className="flex items-center justify-between h-16 px-6">
           <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-indigo-500/20">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-green shadow-lg shadow-brand-green/20 border border-brand-green-light/45">
+              <Logo className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">
-                Antigravity Enterprise
+              <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400 font-sans tracking-tight">
+                VerdantHR
               </h1>
-              <p className="text-[10px] text-slate-400">Workforce & Operations Portal</p>
+              <p className="text-[10px] text-slate-400">Enterprise Workforce Management Platform</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Environment Toggle */}
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-800">
-              <Shield className="w-3.5 h-3.5 text-blue-400" />
+              <Shield className="w-3.5 h-3.5 text-brand-green-accent" />
               <span className="text-[11px] font-medium text-slate-300">Simulate Role:</span>
               <select 
                 value={selectedRole}
@@ -193,10 +194,10 @@ export default function Home() {
         <section className="lg:col-span-8 flex flex-col gap-6">
           
           {/* Welcome Alert */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900/30 via-indigo-950/20 to-slate-900/30 p-6 border border-blue-500/20 shadow-md">
-            <div className="absolute right-0 top-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-green/30 via-slate-900/20 to-slate-900/30 p-6 border border-brand-green/20 shadow-md">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-brand-green/10 rounded-full blur-3xl pointer-events-none"></div>
             <div className="flex flex-col gap-2 max-w-xl">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-400/10 text-blue-300 border border-blue-400/20 w-fit">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-green/15 text-brand-green-pale border border-brand-green/20 w-fit">
                 <Sparkles className="w-3 h-3" /> Ready for Development
               </span>
               <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight mt-1">
@@ -207,13 +208,13 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-3 mt-3">
                 <div className="px-3 py-1.5 rounded-lg bg-slate-950/50 border border-slate-800 text-xs text-slate-400">
-                  DB Provider: <span className="text-indigo-400 font-semibold">PostgreSQL</span>
+                  DB Provider: <span className="text-brand-green-accent font-semibold">PostgreSQL</span>
                 </div>
                 <div className="px-3 py-1.5 rounded-lg bg-slate-950/50 border border-slate-800 text-xs text-slate-400">
                   Prisma Client: <span className="text-emerald-400 font-semibold">v7.8.0</span>
                 </div>
                 <div className="px-3 py-1.5 rounded-lg bg-slate-950/50 border border-slate-800 text-xs text-slate-400">
-                  Stitch Status: <span className="text-blue-400 font-semibold">Loaded</span>
+                  Stitch Status: <span className="text-brand-green-light font-semibold">Loaded</span>
                 </div>
               </div>
             </div>

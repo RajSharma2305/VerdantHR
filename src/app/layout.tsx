@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Enterprise Workforce Management Platform",
+  title: "VerdantHR - Enterprise Workforce Management Platform",
   description: "Advanced workforce operations portal with AI Assistant",
 };
 
