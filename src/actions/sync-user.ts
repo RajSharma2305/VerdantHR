@@ -34,18 +34,28 @@ export async function syncUserAction(idToken: string) {
       }
     }
 
-    // Upsert User in database
-    const user = await prisma.user.upsert({
-      where: { firebaseUid: uid },
-      update: {
-        role: roleToAssign,
-      },
-      create: {
-        firebaseUid: uid,
-        email: email,
-        role: roleToAssign,
-      },
+    // Save/Update User in database (avoiding upsert to prevent replica set transactions requirement)
+    const existingUser = await prisma.user.findUnique({
+      where: { firebaseUid: uid }
     });
+
+    let user;
+    if (existingUser) {
+      user = await prisma.user.update({
+        where: { firebaseUid: uid },
+        data: {
+          role: roleToAssign,
+        }
+      });
+    } else {
+      user = await prisma.user.create({
+        data: {
+          firebaseUid: uid,
+          email: email,
+          role: roleToAssign,
+        }
+      });
+    }
 
     // Check if employee profile exists, if not create a default draft profile
     const employee = await prisma.employee.findUnique({

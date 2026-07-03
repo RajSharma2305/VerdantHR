@@ -85,18 +85,28 @@ export async function syncFirebaseUsersAction() {
         role = Role.ORG_ADMIN;
       }
 
-      const upserted = await prisma.user.upsert({
-        where: { firebaseUid: userRecord.uid },
-        update: {
-          email: userRecord.email,
-        },
-        create: {
-          firebaseUid: userRecord.uid,
-          email: userRecord.email,
-          role: role,
-        },
+      const existingUser = await prisma.user.findUnique({
+        where: { firebaseUid: userRecord.uid }
       });
-      syncedUsers.push(upserted);
+
+      let updatedOrCreated;
+      if (existingUser) {
+        updatedOrCreated = await prisma.user.update({
+          where: { firebaseUid: userRecord.uid },
+          data: {
+            email: userRecord.email,
+          }
+        });
+      } else {
+        updatedOrCreated = await prisma.user.create({
+          data: {
+            firebaseUid: userRecord.uid,
+            email: userRecord.email,
+            role: role,
+          }
+        });
+      }
+      syncedUsers.push(updatedOrCreated);
     }
 
     return { success: true, count: syncedUsers.length };
