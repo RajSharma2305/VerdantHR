@@ -2,98 +2,140 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/auth-context';
+import { Logo } from '@/components/logo';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Clock, CalendarRange, 
   LayoutDashboard, Coins, Laptop, Ticket, 
-  Shield, Search, LogOut, ArrowRight,
+  Shield, Search, LogOut,
   Menu, Bell, ChevronLeft, ChevronRight, X,
-  User, Settings, Plus, TrendingUp, Filter
+  User, Settings, Plus, TrendingUp,
+  CheckCircle2, Calendar, MessageSquare,
+  Activity, Check, MoreHorizontal, Sparkles,
+  Bot, Send, Loader2
 } from 'lucide-react';
-import { Logo } from '@/components/logo';
 
-// Predefined roles for simulated RBAC testing
-const AVAILABLE_ROLES = [
-  { id: 'EMPLOYEE', label: 'Employee', desc: 'Self-service portal access' },
-  { id: 'HR_MANAGER', label: 'HR Manager', desc: 'Full employee & recruitment access' },
-  { id: 'MANAGER', label: 'Department Manager', desc: 'Approve leaves & evaluate tasks' },
-  { id: 'FINANCE_EXECUTIVE', label: 'Finance Executive', desc: 'Run payroll & view salaries' },
-  { id: 'IT_ADMINISTRATOR', label: 'IT Administrator', desc: 'Manage assets & resolve tickets' },
-  { id: 'SUPER_ADMIN', label: 'Super Admin', desc: 'Complete system control' }
-];
+
 
 export default function Dashboard() {
   const { user, role, signOut } = useAuth();
   
-  // Responsive / Interactivity states
+  // Interactive UI States
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   
-  // Dashboard mock states
-  const [selectedRole, setSelectedRole] = useState(role || 'HR_MANAGER');
+  // App States
+  const selectedRole = role || 'EMPLOYEE';
   const [activeTab, setActiveTab] = useState('Overview');
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterDept, setFilterDept] = useState('All');
 
-  // Notifications mock data
+  // simulated task checklist
+  const [tasks, setTasks] = useState([
+    { id: 'tsk-1', text: 'Approve Rahul\'s casual leave request', done: false, priority: 'high' },
+    { id: 'tsk-2', text: 'Assign MacBook Pro to Priya Singh', done: true, priority: 'medium' },
+    { id: 'tsk-3', text: 'Review payroll budget for Q3 operations', done: false, priority: 'high' },
+    { id: 'tsk-4', text: 'Update VerdantHR onboarding checklist docs', done: false, priority: 'low' }
+  ]);
+
+  // Simulated notifications
   const [notifications, setNotifications] = useState([
-    { id: 1, title: 'New leave request', message: 'Rahul Sharma applied for Casual Leave', time: '5m ago', read: false },
-    { id: 2, title: 'Asset Allocated', message: 'MacBook Pro SN: MB-2026-X83 assigned to Priya Singh', time: '1h ago', read: false },
-    { id: 3, title: 'Payroll Run Complete', message: 'June payroll generated for review', time: '4h ago', read: true },
-    { id: 4, title: 'Security Alert', message: 'Suspicious login detected from IP 192.168.1.105', time: 'Yesterday', read: true }
+    { id: 1, title: 'New Leave Request', text: 'Rahul Sharma applied for 3 days of Casual Leave', time: '10m ago', read: false },
+    { id: 2, title: 'IT Asset Audit', message: 'MacBook Pro SN: MB-2026-X83 assigned to Priya Singh', time: '1h ago', read: false },
+    { id: 3, title: 'June Payroll Ready', message: 'VerdantHR payroll calculations generated', time: '4h ago', read: true }
   ]);
 
-  // Employee list mock data
-  const [employees, setEmployees] = useState([
-    { id: 'EMP001', name: 'Rahul Sharma', email: 'rahul.sharma@company.com', dept: 'Engineering', role: 'Software Engineer', status: 'Active', joiningDate: '2026-01-15' },
-    { id: 'EMP002', name: 'Priya Singh', email: 'priya.singh@company.com', dept: 'Engineering', role: 'Frontend Engineer', status: 'Active', joiningDate: '2026-03-10' },
-    { id: 'EMP003', name: 'Amit Verma', email: 'amit.verma@company.com', dept: 'HR Operations', role: 'HR Coordinator', status: 'On Leave', joiningDate: '2025-11-01' },
-    { id: 'EMP004', name: 'Neha Gupta', email: 'neha.gupta@company.com', dept: 'Finance', role: 'Payroll Specialist', status: 'Active', joiningDate: '2024-05-15' },
-    { id: 'EMP005', name: 'Raj Sharma', email: 'raj.sharma@company.com', dept: 'HR Operations', role: 'HR Manager', status: 'Active', joiningDate: '2023-08-20' }
+  // Simulated employees list
+  const [employees] = useState([
+    { id: 'EMP001', name: 'Rahul Sharma', email: 'rahul.sharma@company.com', dept: 'Engineering', role: 'Software Engineer', status: 'Active', avatar: 'RS' },
+    { id: 'EMP002', name: 'Priya Singh', email: 'priya.singh@company.com', dept: 'Engineering', role: 'Frontend Developer', status: 'Active', avatar: 'PS' },
+    { id: 'EMP003', name: 'Amit Verma', email: 'amit.verma@company.com', dept: 'HR Operations', role: 'HR Coordinator', status: 'On Leave', avatar: 'AV' },
+    { id: 'EMP004', name: 'Neha Gupta', email: 'neha.gupta@company.com', dept: 'Finance', role: 'Payroll Lead', status: 'Active', avatar: 'NG' },
+    { id: 'EMP005', name: 'Raj Sharma', email: 'raj.sharma@company.com', dept: 'HR Operations', role: 'HR Manager', status: 'Active', avatar: 'RS' }
   ]);
+
+  // AI Chat states
+  const [chatMessages, setChatMessages] = useState([
+    { sender: 'assistant', text: 'Hi! I am your VerdantHR AI assistant. How can I help you manage employee operations, leaves, or system configurations today?' }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isAiTyping, setIsAiTyping] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const handleToggleTask = (id: string) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
   };
 
-  const deleteNotification = (id: number) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+
+  // Fix the timeout duration below to be 1000ms
+  const handleSendMessageFixed = (userText: string) => {
+    setChatMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    setIsAiTyping(true);
+
+    setTimeout(() => {
+      let aiResponse = "I am processing that command. VerdantHR analytics indicate stable operations.";
+      const query = userText.toLowerCase();
+
+      if (query.includes('leave') || query.includes('casual')) {
+        aiResponse = "Rahul Sharma has 5 casual leaves remaining of his 12 allocated days. Amit Verma is currently On Leave.";
+      } else if (query.includes('task') || query.includes('todo')) {
+        const pending = tasks.filter(t => !t.done).length;
+        aiResponse = `You currently have ${pending} pending tasks in your VerdantHR action items queue.`;
+      } else if (query.includes('role') || query.includes('permissions')) {
+        aiResponse = `Your authenticated role is ${selectedRole}.`;
+      } else if (query.includes('stitch') || query.includes('sdk')) {
+        aiResponse = "The Google Stitch SDK is initialized. To generate a mockup UI screen, verify your STITCH_API_KEY inside the project's .env file.";
+      }
+
+      setChatMessages(prev => [...prev, { sender: 'assistant', text: aiResponse }]);
+      setIsAiTyping(false);
+    }, 1000);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    const text = chatInput;
+    setChatInput('');
+    handleSendMessageFixed(text);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex text-slate-800">
+    <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden">
       
       {/* ----------------- SIDEBAR ----------------- */}
-      {/* Desktop Sidebar */}
-      <aside 
-        className={`hidden md:flex flex-col bg-brand-green border-r border-brand-green-dark transition-all duration-300 text-slate-100 ${
-          sidebarCollapsed ? 'w-20' : 'w-64'
-        }`}
+      {/* Collapsible Sidebar (Framer Motion Animated) */}
+      <motion.aside 
+        animate={{ width: sidebarCollapsed ? 64 : 240 }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
+        className="hidden md:flex flex-col bg-[#004225] text-slate-100 flex-shrink-0 relative z-30"
       >
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-brand-green-hover/40 bg-brand-green-dark">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-[#005c33] bg-[#002d1a]">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-brand-green-accent">
-              <Logo className="w-5 h-5 text-brand-green-pale" />
+            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/20">
+              <Logo className="w-5 h-5 text-white" />
             </div>
             {!sidebarCollapsed && (
-              <span className="font-bold text-sm tracking-wide text-white whitespace-nowrap">
+              <span className="font-bold text-sm tracking-tight text-white whitespace-nowrap">
                 VerdantHR
               </span>
             )}
           </div>
           <button 
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-1 rounded bg-brand-green-hover/55 text-slate-300 hover:text-white transition-all focus:outline-none"
+            className="p-1 rounded bg-[#005c33] text-slate-350 hover:text-white transition-all focus:outline-none hidden md:block"
           >
-            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
           </button>
         </div>
 
-        {/* Sidebar Navigation */}
-        <nav className="flex-1 py-4 space-y-1 px-3">
+        {/* Sidebar Menu Links */}
+        <nav className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
           {[
             { name: 'Overview', icon: LayoutDashboard },
             { name: 'Employees', icon: Users },
@@ -112,11 +154,11 @@ export default function Dashboard() {
                 onClick={() => setActiveTab(item.name)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all group ${
                   isActive 
-                    ? 'bg-white text-brand-green shadow-md shadow-brand-green-dark/30' 
-                    : 'text-brand-green-pale/85 hover:bg-white/10 hover:text-white'
+                    ? 'bg-white text-[#004225] shadow-sm' 
+                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-brand-green' : 'text-brand-green-pale/80 group-hover:text-white'}`} />
+                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-[#004225]' : 'text-slate-300 group-hover:text-white'}`} />
                 {!sidebarCollapsed && <span>{item.name}</span>}
               </button>
             );
@@ -124,118 +166,114 @@ export default function Dashboard() {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-brand-green-hover/40 bg-brand-green-dark/40">
+        <div className="p-4 border-t border-[#005c33] bg-[#002d1a]/50">
           <div className="flex items-center justify-between">
             {!sidebarCollapsed && (
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-white truncate max-w-[120px]">{user?.email?.split('@')[0] || 'Admin User'}</span>
-                <span className="text-[9px] text-brand-green-accent font-semibold uppercase tracking-wider">{selectedRole}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-white truncate">{user?.email?.split('@')[0] || 'Administrator'}</span>
+                <span className="text-[9px] text-[#2D6A4F] bg-white/90 px-1.5 py-0.5 rounded font-black uppercase tracking-wider w-fit mt-0.5">{selectedRole}</span>
               </div>
             )}
             <button 
               onClick={signOut}
-              className="p-1.5 rounded-lg bg-white/10 hover:bg-red-500/20 hover:text-red-300 text-slate-300 transition-all focus:outline-none"
-              title="Sign Out"
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-red-500/20 text-slate-300 hover:text-red-300 transition-all focus:outline-none ml-auto"
             >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
-      </aside>
+      </motion.aside>
 
-      {/* Mobile Sidebar Drawer Overlay */}
-      {mobileMenuOpen && (
-        <div 
-          onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm md:hidden"
-        >
-          <aside 
-            onClick={(e) => e.stopPropagation()}
-            className="w-64 h-full bg-brand-green text-slate-100 flex flex-col shadow-2xl animate-slide-in"
-          >
-            <div className="h-16 flex items-center justify-between px-5 border-b border-brand-green-hover/40 bg-brand-green-dark">
-              <div className="flex items-center gap-3">
-                <Logo className="w-5 h-5 text-white" />
-                <span className="font-bold text-sm tracking-wide text-white">VerdantHR</span>
-              </div>
-              <button 
-                onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded bg-brand-green-hover/55 text-slate-300 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            
-            <nav className="flex-1 py-4 space-y-1 px-3">
-              {[
-                { name: 'Overview', icon: LayoutDashboard },
-                { name: 'Employees', icon: Users },
-                { name: 'Attendance', icon: Clock },
-                { name: 'Leaves', icon: CalendarRange },
-                { name: 'Payroll', icon: Coins },
-                { name: 'Assets', icon: Laptop },
-                { name: 'Help Desk', icon: Ticket },
-                { name: 'Settings', icon: Settings }
-              ].map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.name;
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => {
-                      setActiveTab(item.name);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                      isActive 
-                        ? 'bg-white text-brand-green shadow-md' 
-                        : 'text-brand-green-pale/85 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <Icon className="w-4.5 h-4.5" />
-                    <span>{item.name}</span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            <div className="p-5 border-t border-brand-green-hover/40 bg-brand-green-dark/40">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-white">{user?.email?.split('@')[0] || 'Admin User'}</span>
-                  <span className="text-[9px] text-brand-green-accent font-semibold uppercase tracking-wider">{selectedRole}</span>
+      {/* Mobile Drawer (Framer Motion) */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 flex md:hidden">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+            />
+            <motion.aside 
+              initial={{ x: -240 }}
+              animate={{ x: 0 }}
+              exit={{ x: -240 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="w-60 h-full bg-[#004225] text-slate-100 flex flex-col relative z-50 shadow-2xl"
+            >
+              <div className="h-16 flex items-center justify-between px-5 border-b border-[#005c33] bg-[#002d1a]">
+                <div className="flex items-center gap-3">
+                  <Logo className="w-5 h-5 text-white" />
+                  <span className="font-bold text-sm tracking-tight text-white">VerdantHR</span>
                 </div>
-                <button 
-                  onClick={signOut}
-                  className="p-2 rounded-lg bg-white/10 hover:bg-red-500/20 text-slate-350"
-                >
-                  <LogOut className="w-4.5 h-4.5" />
+                <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded text-slate-300">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-          </aside>
-        </div>
-      )}
 
-      {/* ----------------- MAIN VIEW CONTAINER ----------------- */}
-      <div className="flex-1 flex flex-col min-w-0">
+              <nav className="flex-1 py-4 space-y-1 px-3">
+                {[
+                  { name: 'Overview', icon: LayoutDashboard },
+                  { name: 'Employees', icon: Users },
+                  { name: 'Attendance', icon: Clock },
+                  { name: 'Leaves', icon: CalendarRange },
+                  { name: 'Payroll', icon: Coins },
+                  { name: 'Assets', icon: Laptop },
+                  { name: 'Help Desk', icon: Ticket },
+                  { name: 'Settings', icon: Settings }
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.name;
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => {
+                        setActiveTab(item.name);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                        isActive ? 'bg-white text-[#004225]' : 'text-slate-300 hover:bg-white/10'
+                      }`}
+                    >
+                      <Icon className="w-4.5 h-4.5" />
+                      <span>{item.name}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <div className="p-5 border-t border-[#005c33] bg-[#002d1a]">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-white">{user?.email?.split('@')[0]}</span>
+                    <span className="text-[9px] text-[#2D6A4F] bg-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider mt-0.5">{selectedRole}</span>
+                  </div>
+                  <button onClick={signOut} className="p-2 rounded bg-white/10 hover:bg-red-500/20 text-slate-300">
+                    <LogOut className="w-4.5 h-4.5" />
+                  </button>
+                </div>
+              </div>
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ----------------- MAIN VIEW ----------------- */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         
-        {/* Top Header Navigation */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-30">
-          
-          {/* Mobile hamburger menu toggle */}
+        {/* Top Navbar */}
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-25">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setMobileMenuOpen(true)}
-              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 md:hidden focus:outline-none"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 md:hidden"
             >
               <Menu className="w-5 h-5" />
             </button>
-            
-            {/* Page title / Breadcrumb */}
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 text-xs hidden md:inline font-medium">Platform</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400 hidden md:inline" />
+            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+              <span>VerdantHR</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
               <span className="font-bold text-slate-800 text-sm tracking-tight">{activeTab}</span>
             </div>
           </div>
@@ -246,84 +284,65 @@ export default function Dashboard() {
               <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
-                placeholder="Search resources, directories..." 
+                placeholder="Search..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-100 border border-slate-200 focus:border-brand-green/30 rounded-xl py-1.5 pl-9 pr-4 text-xs text-slate-700 placeholder-slate-400 focus:outline-none transition-all"
+                className="w-full bg-slate-100 border border-slate-200 focus:border-brand-green/20 rounded-xl py-1.5 pl-9 pr-4 text-xs focus:outline-none focus:bg-white transition-all text-slate-700 placeholder-slate-400"
               />
             </div>
 
-            {/* Simulated Role Selection for Testing */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand-green-pale border border-brand-green/10 text-brand-green">
-              <Shield className="w-3.5 h-3.5 text-brand-green-light" />
-              <select 
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="bg-transparent text-[11px] font-bold focus:outline-none cursor-pointer text-brand-green"
-              >
-                {AVAILABLE_ROLES.map(r => (
-                  <option key={r.id} value={r.id} className="bg-white text-slate-700 font-medium">
-                    {r.label}
-                  </option>
-                ))}
-              </select>
+            {/* Real Role Display */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100 text-[#2D6A4F] text-[10px] font-black uppercase tracking-wider">
+              <Shield className="w-3.5 h-3.5 text-[#2D6A4F]" />
+              <span>{selectedRole}</span>
             </div>
 
-            {/* Notification Bell with interactive Drawer */}
+            {/* Notification Center */}
             <div className="relative">
               <button 
                 onClick={() => {
                   setNotificationsOpen(!notificationsOpen);
                   setProfileMenuOpen(false);
                 }}
-                className="relative p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-850 transition-all focus:outline-none"
+                className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 relative transition-all"
               >
                 <Bell className="w-4.5 h-4.5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-brand-green border-2 border-white rounded-full flex items-center justify-center text-[8px] font-black text-white">
-                    {unreadCount}
-                  </span>
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#2D6A4F] rounded-full"></span>
                 )}
               </button>
-
-              {notificationsOpen && (
-                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fade-in-up">
-                  <div className="px-4 py-3 border-b border-slate-150 bg-slate-50 flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700">Notifications</span>
-                    {unreadCount > 0 && (
+              
+              <AnimatePresence>
+                {notificationsOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden"
+                  >
+                    <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Notifications</span>
                       <button 
-                        onClick={markAllRead}
-                        className="text-[10px] font-bold text-brand-green hover:underline"
+                        onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
+                        className="text-[10px] font-bold text-[#2D6A4F] hover:underline"
                       >
                         Mark all as read
                       </button>
-                    )}
-                  </div>
-                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                    {notifications.length > 0 ? (
-                      notifications.map(n => (
-                        <div key={n.id} className={`p-3 text-xs relative hover:bg-slate-50 transition-all ${!n.read ? 'bg-brand-green-pale/30' : ''}`}>
+                    </div>
+                    <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                      {notifications.map(n => (
+                        <div key={n.id} className={`p-3.5 text-xs hover:bg-slate-50/50 transition-all ${!n.read ? 'bg-emerald-500/5' : ''}`}>
                           <div className="flex justify-between items-start">
-                            <span className="font-semibold text-slate-800">{n.title}</span>
-                            <button 
-                              onClick={() => deleteNotification(n.id)}
-                              className="text-slate-400 hover:text-red-500 p-0.5 rounded"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                            <span className="font-bold text-slate-800">{n.title}</span>
+                            <span className="text-[9px] text-slate-400">{n.time}</span>
                           </div>
-                          <p className="text-slate-500 text-[11px] mt-0.5">{n.message}</p>
-                          <span className="text-[9px] text-slate-450 block mt-1">{n.time}</span>
+                          <p className="text-slate-500 text-[11px] mt-0.5">{n.text || n.message}</p>
                         </div>
-                      ))
-                    ) : (
-                      <div className="p-6 text-center text-slate-400 text-xs">
-                        No new notifications
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Profile Dropdown */}
@@ -333,87 +352,91 @@ export default function Dashboard() {
                   setProfileMenuOpen(!profileMenuOpen);
                   setNotificationsOpen(false);
                 }}
-                className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 transition-all focus:outline-none"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-[#004225] text-white font-bold text-xs"
               >
-                <div className="w-8 h-8 rounded-full bg-brand-green text-white flex items-center justify-center font-bold text-xs shadow shadow-brand-green-dark/20">
-                  {user?.email?.charAt(0).toUpperCase() || 'A'}
-                </div>
+                {user?.email?.charAt(0).toUpperCase() || 'A'}
               </button>
-
-              {profileMenuOpen && (
-                <div className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fade-in-up">
-                  <div className="px-4 py-3 border-b border-slate-150 bg-slate-50">
-                    <span className="block text-xs font-bold text-slate-700 truncate">{user?.email || 'admin@company.com'}</span>
-                    <span className="text-[9px] text-brand-green-light font-bold uppercase tracking-wider">{selectedRole}</span>
-                  </div>
-                  <div className="p-1 space-y-0.5">
-                    <button className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-100 transition-all flex items-center gap-2 text-slate-650">
-                      <User className="w-4 h-4 text-slate-400" />
-                      <span>My Profile</span>
-                    </button>
-                    <button className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-100 transition-all flex items-center gap-2 text-slate-650">
-                      <Settings className="w-4 h-4 text-slate-400" />
-                      <span>Settings</span>
-                    </button>
-                    <div className="h-px bg-slate-150 my-1"></div>
-                    <button 
-                      onClick={signOut}
-                      className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-red-50 text-red-600 transition-all flex items-center gap-2"
-                    >
-                      <LogOut className="w-4 h-4 text-red-400" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
+              <AnimatePresence>
+                {profileMenuOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute right-0 mt-3 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden"
+                  >
+                    <div className="px-4 py-3 bg-slate-50 border-b border-slate-100">
+                      <span className="block text-xs font-bold text-slate-700 truncate">{user?.email || 'admin@verdanthr.com'}</span>
+                      <span className="text-[9px] text-[#2D6A4F] font-bold uppercase tracking-wider">{selectedRole}</span>
+                    </div>
+                    <div className="p-1 space-y-0.5">
+                      <button className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-100 flex items-center gap-2 text-slate-600">
+                        <User className="w-4 h-4 text-slate-400" />
+                        <span>My Profile</span>
+                      </button>
+                      <button className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-slate-100 flex items-center gap-2 text-slate-600">
+                        <Settings className="w-4 h-4 text-slate-400" />
+                        <span>Settings</span>
+                      </button>
+                      <div className="h-px bg-slate-100 my-1"></div>
+                      <button 
+                        onClick={signOut}
+                        className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-red-50 text-red-650 flex items-center gap-2"
+                      >
+                        <LogOut className="w-4 h-4 text-red-400" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-
           </div>
         </header>
 
-        {/* Dashboard Content Workspace */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-6">
+        {/* Dashboard Content Panel */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {/* Top Welcome Title */}
+          {/* Welcome Intro */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight">Enterprise Overview</h2>
-              <p className="text-xs text-slate-500">Live indicators, system operations, and department summaries.</p>
+              <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                Good day, {user?.email?.split('@')[0] || 'VerdantHR Admin'} <Sparkles className="w-4 h-4 text-amber-500" />
+              </h2>
+              <p className="text-xs text-slate-500">Here is what is happening across your enterprise workforce today.</p>
             </div>
             
-            {/* Quick Actions Bar */}
             <div className="flex gap-2">
-              <button className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition-all flex items-center gap-1.5 shadow-sm shadow-slate-100">
-                <Filter className="w-3.5 h-3.5 text-slate-400" />
-                <span>Filters</span>
-              </button>
-              <button 
-                onClick={() => alert('Simulated onboarding workspace initialized')}
-                className="px-4.5 py-2 rounded-xl bg-brand-green hover:bg-brand-green-hover text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow shadow-brand-green-dark/20"
-              >
+              <button className="px-4 py-2 bg-[#2D6A4F] hover:bg-[#204f3b] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5">
                 <Plus className="w-4 h-4" />
-                <span>Onboard Employee</span>
+                <span>Quick Actions</span>
               </button>
             </div>
           </div>
 
-          {/* 4 Overview Grid Cards */}
+          {/* KPI Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { title: 'Workforce Strength', value: '82', footer: '+4 since last month', icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
-              { title: 'On Duty Shift', value: '76', footer: '6 employees on leave', icon: Clock, color: 'text-brand-green-accent', bg: 'bg-emerald-500/10' },
-              { title: 'Leaves Pending', value: '3', footer: 'Requires HR approval', icon: CalendarRange, color: 'text-purple-600', bg: 'bg-purple-500/10' },
-              { title: 'Open IT Tickets', value: '3', footer: '1 critical item pending', icon: Ticket, color: 'text-amber-600', bg: 'bg-amber-500/10' }
-            ].map((card, i) => {
-              const Icon = card.icon;
+              { title: 'Total Employees', value: '82', footer: '4 onboarding candidates', icon: Users, change: '+4.2%', changeType: 'positive' },
+              { title: 'Active Attendance', value: '76', footer: '92.6% punctuality rate', icon: Clock, change: '92.6%', changeType: 'info' },
+              { title: 'Leave Requests', value: '3', footer: '2 requests require review', icon: CalendarRange, change: 'Pending', changeType: 'warn' },
+              { title: 'Sprint Completion', value: '64%', footer: '2 active sprints in progress', icon: Activity, change: '+12%', changeType: 'positive' }
+            ].map((kpi, idx) => {
+              const Icon = kpi.icon;
               return (
-                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm shadow-slate-100 flex items-center justify-between hover:border-slate-300 hover:shadow transition-all group">
+                <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
                   <div className="space-y-1">
-                    <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">{card.title}</span>
-                    <span className="block text-2xl font-black text-slate-800 tracking-tight">{card.value}</span>
-                    <span className="block text-[10px] text-slate-500">{card.footer}</span>
+                    <span className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">{kpi.title}</span>
+                    <span className="block text-2xl font-black text-slate-800 tracking-tight">{kpi.value}</span>
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-1">
+                      <span className={`px-1.5 py-0.25 rounded font-black ${
+                        kpi.changeType === 'positive' ? 'bg-emerald-100 text-emerald-800' :
+                        kpi.changeType === 'warn' ? 'bg-amber-100 text-amber-800' :
+                        'bg-slate-100 text-slate-800'
+                      }`}>{kpi.change}</span>
+                      <span>{kpi.footer}</span>
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-xl ${card.bg} ${card.color} border border-slate-100 transition-all duration-300 group-hover:scale-110`}>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-[#004225]">
                     <Icon className="w-5.5 h-5.5" />
                   </div>
                 </div>
@@ -421,188 +444,362 @@ export default function Dashboard() {
             })}
           </div>
 
-          {/* Charts Placeholder Layout (2 columns) */}
+          {/* Main Visual Layout (Middle Grid) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Attendance SVG Chart */}
-            <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm shadow-slate-100 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4">
+            {/* Left side: Charts & Analytics Table */}
+            <div className="lg:col-span-8 space-y-6">
+              
+              {/* Interactive Weekly Shift Chart */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="font-bold text-slate-800 text-sm tracking-tight">Shift Attendance Trends</h3>
-                    <p className="text-[10px] text-slate-400">Weekly rate comparison (%)</p>
+                    <h3 className="font-bold text-slate-800 text-sm tracking-tight">Workforce Attendance Weekly Rates</h3>
+                    <p className="text-[10px] text-slate-400">Weekly simulated data index</p>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-brand-green font-bold">
+                  <div className="flex items-center gap-1 text-[#2D6A4F] text-xs font-bold bg-emerald-50 px-2.5 py-1 rounded-xl">
                     <TrendingUp className="w-3.5 h-3.5" />
-                    <span>94.8% Average</span>
+                    <span>Average 95%</span>
                   </div>
                 </div>
 
-                {/* SVG Area/Bar Interactive Chart */}
-                <div className="h-56 w-full flex items-end justify-between pt-4 px-2">
-                  {[
-                    { label: 'Mon', rate: 96 },
-                    { label: 'Tue', rate: 94 },
-                    { label: 'Wed', rate: 97 },
-                    { label: 'Thu', rate: 93 },
-                    { label: 'Fri', rate: 95 },
-                    { label: 'Sat', rate: 88 },
-                    { label: 'Sun', rate: 82 }
-                  ].map((bar, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer h-full justify-end">
-                      {/* Bar indicator info */}
-                      <span className="text-[9px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white px-1.5 py-0.5 rounded shadow">
-                        {bar.rate}%
-                      </span>
-                      {/* Interactive Height Bar */}
-                      <div 
-                        className="w-8 sm:w-10 bg-brand-green/10 rounded-t-lg group-hover:bg-brand-green transition-all duration-300 relative"
-                        style={{ height: `${bar.rate}%` }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-t from-brand-green-dark/20 to-brand-green-accent/20 rounded-t-lg"></div>
-                      </div>
-                      <span className="text-[10px] font-semibold text-slate-500">{bar.label}</span>
-                    </div>
+                {/* SVG Visual line chart */}
+                <div className="h-48 w-full pt-4 relative">
+                  <svg className="w-full h-full" viewBox="0 0 700 150">
+                    <defs>
+                      <linearGradient id="chart-glow" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2D6A4F" stopOpacity="0.15" />
+                        <stop offset="100%" stopColor="#2D6A4F" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    {/* Grid lines */}
+                    <line x1="0" y1="30" x2="700" y2="30" stroke="#f1f5f9" strokeWidth="1" />
+                    <line x1="0" y1="75" x2="700" y2="75" stroke="#f1f5f9" strokeWidth="1" />
+                    <line x1="0" y1="120" x2="700" y2="120" stroke="#f1f5f9" strokeWidth="1" />
+                    
+                    {/* Shadow Area under the line */}
+                    <path d="M 10 120 L 10 30 Q 120 40 230 25 T 450 70 T 690 15 L 690 120 Z" fill="url(#chart-glow)" />
+                    {/* Main stroke line */}
+                    <path d="M 10 30 Q 120 40 230 25 T 450 70 T 690 15" fill="none" stroke="#2D6A4F" strokeWidth="3.5" strokeLinecap="round" />
+                    
+                    {/* Nodes on path */}
+                    <circle cx="10" cy="30" r="5" fill="#2D6A4F" stroke="white" strokeWidth="2" />
+                    <circle cx="230" cy="25" r="5" fill="#2D6A4F" stroke="white" strokeWidth="2" />
+                    <circle cx="450" cy="70" r="5" fill="#2D6A4F" stroke="white" strokeWidth="2" />
+                    <circle cx="690" cy="15" r="5" fill="#2D6A4F" stroke="white" strokeWidth="2" />
+                  </svg>
+                  
+                  {/* Axis labels */}
+                  <div className="flex justify-between text-[10px] text-slate-400 mt-2 font-bold px-1">
+                    <span>Monday</span>
+                    <span>Wednesday</span>
+                    <span>Friday</span>
+                    <span>Sunday</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Employee Analytics Table */}
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-150 flex items-center justify-between bg-white">
+                  <div>
+                    <h3 className="font-bold text-slate-800 text-sm tracking-tight">Staff Register Directory</h3>
+                    <p className="text-[10px] text-slate-400 font-medium">Verify department roles and security statuses</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select 
+                      value={filterDept}
+                      onChange={(e) => setFilterDept(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 text-xs rounded-xl py-1 px-3 text-slate-650 focus:outline-none focus:border-brand-green/20"
+                    >
+                      <option value="All">All Departments</option>
+                      <option value="Engineering">Engineering</option>
+                      <option value="HR Operations">HR Operations</option>
+                      <option value="Finance">Finance</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-55 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        <th className="py-3 px-5">ID</th>
+                        <th className="py-3 px-5">Employee</th>
+                        <th className="py-3 px-5">Department</th>
+                        <th className="py-3 px-5">Role</th>
+                        <th className="py-3 px-5">Status</th>
+                        <th className="py-3 px-5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs text-slate-600 bg-white">
+                      {employees
+                        .filter(e => filterDept === 'All' ? true : e.dept === filterDept)
+                        .filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase()) || e.id.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map((emp) => (
+                          <tr key={emp.id} className="hover:bg-slate-50/40 transition-all">
+                            <td className="py-3 px-5 font-mono font-bold text-slate-450">{emp.id}</td>
+                            <td className="py-3 px-5">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-full bg-[#004225]/10 text-[#004225] flex items-center justify-center font-bold text-[10px]">
+                                  {emp.avatar}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-bold text-slate-800">{emp.name}</span>
+                                  <span className="text-[10px] text-slate-400">{emp.email}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-5">{emp.dept}</td>
+                            <td className="py-3 px-5">{emp.role}</td>
+                            <td className="py-3 px-5">
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
+                                emp.status === 'Active' 
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                                  : 'bg-amber-50 text-amber-700 border-amber-100'
+                              }`}>
+                                {emp.status}
+                              </span>
+                            </td>
+                            <td className="py-3 px-5 text-right">
+                              <button className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right side: Calendar, Tasks, Activity Feed */}
+            <div className="lg:col-span-4 space-y-6">
+              
+              {/* Calendar Widget */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-slate-800 text-sm tracking-tight flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-[#2D6A4F]" />
+                    <span>Calendar</span>
+                  </h3>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">July 2026</span>
+                </div>
+                
+                {/* Simulated Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-2">
+                  <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center text-xs">
+                  {/* Empty spaces for offset */}
+                  <span className="text-slate-300 py-1">29</span>
+                  <span className="text-slate-300 py-1">30</span>
+                  
+                  {/* Days */}
+                  <span className="py-1 font-bold text-slate-800 border border-brand-green/20 rounded bg-brand-green-pale text-[#004225]">1</span>
+                  <span className="py-1 text-slate-700">2</span>
+                  <span className="py-1 text-slate-700">3</span>
+                  <span className="py-1 text-slate-750 font-bold">4</span>
+                  <span className="py-1 text-slate-750 font-bold">5</span>
+                  
+                  {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31].map(d => (
+                    <span 
+                      key={d} 
+                      className={`py-1 text-slate-700 relative flex items-center justify-center hover:bg-slate-100 rounded cursor-pointer ${
+                        d === 15 ? 'bg-amber-500/10 text-amber-800 font-bold border border-amber-500/20' : ''
+                      } ${
+                        d === 20 ? 'bg-purple-500/10 text-purple-800 font-bold border border-purple-500/20' : ''
+                      }`}
+                      title={d === 15 ? 'Leave Deadline' : d === 20 ? 'Policy Review' : ''}
+                    >
+                      {d}
+                      {(d === 15 || d === 20) && (
+                        <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-current"></span>
+                      )}
+                    </span>
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Department Headcount Breakdown */}
-            <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm shadow-slate-100 flex flex-col justify-between">
-              <div>
-                <h3 className="font-bold text-slate-800 text-sm tracking-tight">Department Headcounts</h3>
-                <p className="text-[10px] text-slate-400 mb-4">Total breakdown per department</p>
-
+              {/* Action Tasks checklist */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <h3 className="font-bold text-slate-800 text-sm tracking-tight mb-4 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#2D6A4F]" />
+                  <span>Your Tasks</span>
+                </h3>
+                
                 <div className="space-y-3">
-                  {[
-                    { name: 'Engineering', count: 48, percentage: 58, color: 'bg-brand-green' },
-                    { name: 'HR Operations', count: 12, percentage: 15, color: 'bg-emerald-600' },
-                    { name: 'Finance', count: 8, percentage: 10, color: 'bg-indigo-600' },
-                    { name: 'Marketing & Sales', count: 14, percentage: 17, color: 'bg-slate-400' }
-                  ].map((dept, idx) => (
-                    <div key={idx} className="space-y-1">
-                      <div className="flex justify-between items-center text-xs font-semibold">
-                        <span className="text-slate-600">{dept.name}</span>
-                        <span className="text-slate-800">{dept.count} ({dept.percentage}%)</span>
+                  {tasks.map(t => (
+                    <div 
+                      key={t.id} 
+                      onClick={() => handleToggleTask(t.id)}
+                      className="flex items-start gap-3 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-all text-xs"
+                    >
+                      <div className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-all ${
+                        t.done 
+                          ? 'bg-[#2D6A4F] border-[#2D6A4F] text-white' 
+                          : 'border-slate-350 bg-white'
+                      }`}>
+                        {t.done && <Check className="w-3.5 h-3.5" />}
                       </div>
-                      {/* Custom styled progress bars */}
-                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-500 ${dept.color}`}
-                          style={{ width: `${dept.percentage}%` }}
-                        ></div>
+                      <span className={`text-[11px] leading-tight transition-all ${
+                        t.done ? 'line-through text-slate-400' : 'text-slate-700 font-medium'
+                      }`}>{t.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent Activity feed */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <h3 className="font-bold text-slate-800 text-sm tracking-tight mb-4 flex items-center gap-1.5">
+                  <Activity className="w-4 h-4 text-[#2D6A4F]" />
+                  <span>Recent Activity</span>
+                </h3>
+                
+                <div className="space-y-4 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
+                  {[
+                    { title: 'Rahul Sharma clocked in', time: '10m ago', dot: 'bg-emerald-500' },
+                    { title: 'Priya Singh uploaded Aadhaar docs', time: '1h ago', dot: 'bg-blue-500' },
+                    { title: 'June payroll generated by Neha', time: '4h ago', dot: 'bg-amber-500' },
+                    { title: 'New candidate applied: Priya Singh', time: '1d ago', dot: 'bg-[#2D6A4F]' }
+                  ].map((act, i) => (
+                    <div key={i} className="flex gap-4 items-start text-xs relative pl-6">
+                      <span className={`absolute left-[5px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-white ring-2 ring-transparent ${act.dot}`}></span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-slate-700 leading-tight">{act.title}</span>
+                        <span className="text-[10px] text-slate-450 mt-0.5">{act.time}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-150 flex items-center justify-between text-xs text-slate-450">
-                <span>Updated 5m ago</span>
-                <span className="text-brand-green font-bold hover:underline cursor-pointer flex items-center gap-0.5">
-                  <span>View Details</span>
-                  <ArrowRight className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Recent Activity / Employee Status Data Table */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm shadow-slate-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-150 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-slate-800 text-sm tracking-tight">Active Employee Register</h3>
-                <p className="text-[10px] text-slate-400">Manage statuses, profiles, and reporting managers</p>
-              </div>
-              <button 
-                onClick={() => setEmployees([...employees])}
-                className="px-3 py-1.5 bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-all"
-              >
-                Refresh Data
-              </button>
-            </div>
-
-            {/* Table layout responsive wrapper */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-150 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th className="py-3 px-5">Employee ID</th>
-                    <th className="py-3 px-5">Name</th>
-                    <th className="py-3 px-5">Department</th>
-                    <th className="py-3 px-5">Role</th>
-                    <th className="py-3 px-5">Joining Date</th>
-                    <th className="py-3 px-5">Status</th>
-                    <th className="py-3 px-5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-150 text-xs text-slate-650">
-                  {employees.filter(emp => 
-                    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                    emp.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                    emp.dept.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                    emp.role.toLowerCase().includes(searchQuery.toLowerCase())
-                  ).map((emp) => (
-                    <tr key={emp.id} className="hover:bg-slate-50/50 transition-all">
-                      <td className="py-3.5 px-5 font-mono text-slate-500 font-bold">{emp.id}</td>
-                      <td className="py-3.5 px-5">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-800">{emp.name}</span>
-                          <span className="text-[10px] text-slate-400">{emp.email}</span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-5">{emp.dept}</td>
-                      <td className="py-3.5 px-5">{emp.role}</td>
-                      <td className="py-3.5 px-5">{emp.joiningDate}</td>
-                      <td className="py-3.5 px-5">
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
-                          emp.status === 'Active' 
-                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
-                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                        }`}>
-                          {emp.status}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-5 text-right">
-                        <div className="flex justify-end gap-1.5">
-                          <button 
-                            onClick={() => alert(`Simulated edit for ${emp.name}`)}
-                            className="px-2 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 hover:border-slate-300 text-[10px] font-bold text-slate-600 rounded-lg transition-all"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => {
-                              if (confirm(`Archive ${emp.name}?`)) {
-                                setEmployees(prev => prev.filter(e => e.id !== emp.id));
-                              }
-                            }}
-                            className="px-2 py-1 bg-red-50 hover:bg-red-100 border border-red-100 hover:border-red-200 text-[10px] font-bold text-red-600 rounded-lg transition-all"
-                          >
-                            Archive
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination / Table summary */}
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-150 flex items-center justify-between text-xs text-slate-500">
-              <span>Showing 5 of {employees.length} employees</span>
-              <div className="flex gap-1.5">
-                <button className="p-1 px-2.5 bg-white border border-slate-200 rounded-lg text-slate-400 cursor-not-allowed text-[10px] font-bold">Prev</button>
-                <button className="p-1 px-2.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 text-[10px] font-bold text-slate-600 transition-all">Next</button>
-              </div>
             </div>
 
           </div>
 
         </div>
+
+      </div>
+
+      {/* ----------------- FLOATING AI ASSISTANT CHAT WINDOW ----------------- */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        
+        {/* Animated Popover Chat Window */}
+        <AnimatePresence>
+          {aiAssistantOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 30 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="w-96 h-[480px] bg-white border border-slate-200 shadow-2xl rounded-2xl flex flex-col overflow-hidden mb-2"
+            >
+              {/* Chat Window Header */}
+              <div className="px-4 py-3 bg-[#004225] text-white flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white border border-white/20">
+                    <Bot className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black tracking-tight leading-none">VerdantHR AI</h4>
+                    <span className="text-[9px] text-emerald-300 font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span>
+                      Gemini Powered
+                    </span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setAiAssistantOpen(false)}
+                  className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Chat Messages */}
+              <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50 text-xs leading-normal">
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex gap-2 max-w-[85%] ${msg.sender === 'user' ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}>
+                    {msg.sender === 'assistant' && (
+                      <div className="w-6 h-6 rounded-full bg-[#004225]/15 border border-[#004225]/25 flex items-center justify-center text-[#004225] flex-shrink-0">
+                        <Bot className="w-3.5 h-3.5" />
+                      </div>
+                    )}
+                    <div className={`p-3 rounded-2xl ${
+                      msg.sender === 'user' 
+                        ? 'bg-[#2D6A4F] text-white rounded-tr-none' 
+                        : 'bg-white border border-slate-200 text-slate-650 rounded-tl-none shadow-xs'
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+
+                {isAiTyping && (
+                  <div className="flex gap-2 max-w-[85%] mr-auto">
+                    <div className="w-6 h-6 rounded-full bg-[#004225]/15 border border-[#004225]/25 flex items-center justify-center text-[#004225] flex-shrink-0">
+                      <Bot className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="p-3 rounded-2xl bg-white border border-slate-200 text-slate-400 rounded-tl-none shadow-xs flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span className="text-[10px] italic">Thinking...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Suggestion Prompts */}
+              <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50 flex flex-wrap gap-1.5">
+                {[
+                  "Remaining leaves?",
+                  "Show pending tasks",
+                  "Stitch configuration"
+                ].map((pText, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => {
+                      setChatInput('');
+                      handleSendMessageFixed(pText);
+                    }}
+                    className="text-[9px] font-bold text-slate-500 hover:text-[#2D6A4F] bg-white border border-slate-200 hover:border-[#2D6A4F]/40 px-2 py-0.75 rounded transition-all"
+                  >
+                    {pText}
+                  </button>
+                ))}
+              </div>
+
+              {/* Chat Input form */}
+              <form onSubmit={handleFormSubmit} className="p-2.5 border-t border-slate-100 bg-white flex items-center gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Type a message..." 
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  className="flex-1 bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#2D6A4F]/30"
+                />
+                <button 
+                  type="submit"
+                  className="p-1.5 rounded-xl bg-[#2D6A4F] hover:bg-[#204f3b] text-white transition-all shadow-xs"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Floating Bubble Button */}
+        <button 
+          onClick={() => setAiAssistantOpen(!aiAssistantOpen)}
+          className="w-12 h-12 rounded-full bg-[#004225] hover:bg-[#005c33] text-white flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all focus:outline-none border-2 border-white/20"
+          title="VerdantHR AI Assistant"
+        >
+          {aiAssistantOpen ? <X className="w-5 h-5" /> : <MessageSquare className="w-5 h-5" />}
+        </button>
 
       </div>
 

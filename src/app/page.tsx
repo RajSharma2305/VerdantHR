@@ -5,24 +5,13 @@ import { useAuth } from '@/context/auth-context';
 import { 
   Users, Clock, CalendarRange, 
   LayoutDashboard, Coins, Laptop, Ticket, 
-  Send, Bot, Shield, Search, 
+  Send, Bot, Search, 
   Sparkles, LogOut, MapPin, Loader2, ArrowRight
 } from 'lucide-react';
 import { Logo } from '@/components/logo';
 
-// Predefined roles for simulated RBAC testing
-const AVAILABLE_ROLES = [
-  { id: 'EMPLOYEE', label: 'Employee', desc: 'Self-service portal access' },
-  { id: 'HR_MANAGER', label: 'HR Manager', desc: 'Full employee & recruitment access' },
-  { id: 'MANAGER', label: 'Department Manager', desc: 'Approve leaves & evaluate tasks' },
-  { id: 'FINANCE_EXECUTIVE', label: 'Finance Executive', desc: 'Run payroll & view salaries' },
-  { id: 'IT_ADMINISTRATOR', label: 'IT Administrator', desc: 'Manage assets & resolve tickets' },
-  { id: 'SUPER_ADMIN', label: 'Super Admin', desc: 'Complete system control' }
-];
-
 export default function Home() {
   const { user, role, signOut } = useAuth();
-  const [selectedRole, setSelectedRole] = useState<string>('HR_MANAGER');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Simulated stats
@@ -103,10 +92,11 @@ export default function Home() {
           ? `You clocked in today at ${clockInTime}. You have tracked ${todayWorkingHours} hours of work.` 
           : `You are currently clocked out. Don't forget to mark your daily clock-in when beginning work!`;
       } else if (queryLower.includes('role') || queryLower.includes('rbac')) {
-        aiText = `You are currently simulating the '${selectedRole}' role. Your privileges include: ${
-          selectedRole === 'HR_MANAGER' ? 'Full employee CRUD operations, recruitment management, and audit log tracking.' :
-          selectedRole === 'FINANCE_EXECUTIVE' ? 'Full salary adjustment, payslip generation, and financial reports.' :
-          selectedRole === 'SUPER_ADMIN' ? 'Root access across all components and tenant configuration.' :
+        const userRole = role || 'EMPLOYEE';
+        aiText = `Your current authenticated role is '${userRole}'. Your privileges include: ${
+          userRole === 'HR_MANAGER' ? 'Full employee CRUD operations, recruitment management, and audit log tracking.' :
+          userRole === 'FINANCE_EXECUTIVE' ? 'Full salary adjustment, payslip generation, and financial reports.' :
+          userRole === 'SUPER_ADMIN' ? 'Root access across all components and tenant configuration.' :
           'Standard self-service profile updates, leave planning, and task completion.'
         }`;
       } else if (queryLower.includes('stitch') || queryLower.includes('design')) {
@@ -146,29 +136,14 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Environment Toggle */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-800">
-              <Shield className="w-3.5 h-3.5 text-brand-green-accent" />
-              <span className="text-[11px] font-medium text-slate-300">Simulate Role:</span>
-              <select 
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="bg-transparent text-[11px] text-blue-400 font-semibold focus:outline-none cursor-pointer"
-              >
-                {AVAILABLE_ROLES.map(r => (
-                  <option key={r.id} value={r.id} className="bg-slate-950 text-slate-200">
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+
 
             {/* Auth Indicator */}
             {user ? (
               <div className="flex items-center gap-3">
                 <div className="flex flex-col items-end">
                   <span className="text-xs font-semibold text-slate-200">{user.email?.split('@')[0]}</span>
-                  <span className="text-[9px] text-emerald-400 uppercase tracking-wider">{role || selectedRole}</span>
+                  <span className="text-[9px] text-emerald-400 uppercase tracking-wider">{role || 'EMPLOYEE'}</span>
                 </div>
                 <button 
                   onClick={signOut}
