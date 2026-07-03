@@ -288,6 +288,7 @@ export default function Home() {
               <div className="flex gap-2">
                 <button 
                   onClick={applySimulatedLeave}
+                  suppressHydrationWarning
                   className="flex-1 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-blue-500/40 hover:bg-blue-950/10 text-xs font-semibold text-slate-300 hover:text-blue-300 transition-all"
                 >
                   Apply Casual Leave
@@ -316,6 +317,7 @@ export default function Home() {
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
                 <input 
                   type="text" 
+                  suppressHydrationWarning
                   placeholder="Search name, role, email..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -565,6 +567,7 @@ export default function Home() {
           <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800/80 bg-slate-950/40 flex items-center gap-2">
             <input 
               type="text" 
+              suppressHydrationWarning
               placeholder="Ask a policy, query data, sync status..." 
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}

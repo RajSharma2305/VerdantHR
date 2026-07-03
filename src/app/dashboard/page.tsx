@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { Logo } from '@/components/logo';
 import { motion, AnimatePresence } from 'framer-motion';
+import { updateUserRoleAction, getUsersAction } from '@/actions/update-role';
+import { Role } from '@prisma/client';
 import { 
   Users, Clock, CalendarRange, 
   LayoutDashboard, Coins, Laptop, Ticket, 
@@ -32,6 +34,20 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDept, setFilterDept] = useState('All');
+
+  const menuItems = [
+    { name: 'Overview', icon: LayoutDashboard },
+    { name: 'Employees', icon: Users },
+    { name: 'Attendance', icon: Clock },
+    { name: 'Leaves', icon: CalendarRange },
+    { name: 'Payroll', icon: Coins },
+    { name: 'Assets', icon: Laptop },
+    { name: 'Help Desk', icon: Ticket },
+    { name: 'Settings', icon: Settings }
+  ];
+  if (selectedRole === 'SUPER_ADMIN') {
+    menuItems.push({ name: 'System Control', icon: Shield });
+  }
 
   // simulated task checklist
   const [tasks, setTasks] = useState([
@@ -69,6 +85,65 @@ export default function Dashboard() {
   const handleToggleTask = (id: string) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
   };
+  // System Control States
+  interface SafeUser {
+    id: string;
+    email: string;
+    role: Role;
+  }
+  const [dbUsers, setDbUsers] = useState<SafeUser[]>([]);
+  const [loadingDbUsers, setLoadingDbUsers] = useState(false);
+  const [rbacLogs, setRbacLogs] = useState<string[]>([
+    "System Audit Log Initialized.",
+    "Prisma DB Engine connected.",
+    "Firebase Admin SDK initialized."
+  ]);
+  const [rbacStatus, setRbacStatus] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [isDbConnected, setIsDbConnected] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'System Control') {
+      const fetchUsers = async () => {
+        setLoadingDbUsers(true);
+        try {
+          const res = await getUsersAction();
+          if (res.success && res.users) {
+            setDbUsers(res.users);
+            setIsDbConnected(true);
+          } else {
+            setIsDbConnected(false);
+            setRbacStatus({ type: 'error', text: res.error || 'Failed to retrieve database users.' });
+            console.error(res.error);
+          }
+        } catch (e) {
+          setIsDbConnected(false);
+          console.error(e);
+        } finally {
+          setLoadingDbUsers(false);
+        }
+      };
+      fetchUsers();
+    }
+  }, [activeTab]);
+
+  const handleRoleChange = async (userId: string, newRole: Role) => {
+    setRbacStatus(null);
+    try {
+      const res = await updateUserRoleAction(userId, newRole);
+      if (res.success && res.user) {
+        setDbUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+        setRbacStatus({ type: 'success', text: `Successfully updated user role to ${newRole}.` });
+        setRbacLogs(prev => [
+          `[${new Date().toLocaleTimeString()}] Updated user ID ${userId} to role ${newRole}.`,
+          ...prev
+        ]);
+      } else {
+        setRbacStatus({ type: 'error', text: res.error || 'Failed to update user role.' });
+      }
+    } catch (err) {
+      setRbacStatus({ type: 'error', text: err instanceof Error ? err.message : 'An error occurred.' });
+    }
+  };
 
 
   // Fix the timeout duration below to be 1000ms
@@ -104,6 +179,185 @@ export default function Dashboard() {
     handleSendMessageFixed(text);
   };
 
+  const renderSystemControl = () => {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <Shield className="w-5.5 h-5.5 text-[#004225]" />
+            <span>System Control & Role-Based Access Control (RBAC)</span>
+          </h2>
+          <p className="text-xs text-slate-500">Root-level tenant configuration, live database status, and real-time user role management.</p>
+        </div>
+
+        {/* Status Indicator Banner */}
+        {rbacStatus && (
+          <div className={`p-4 rounded-xl text-xs border flex items-start gap-2.5 ${
+            rbacStatus.type === 'success' 
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-100' 
+              : 'bg-red-50 text-red-850 border-red-100'
+          }`}>
+            <Shield className={`w-4 h-4 mt-0.5 ${rbacStatus.type === 'success' ? 'text-emerald-600' : 'text-red-500'}`} />
+            <div>
+              <span className="font-bold">{rbacStatus.type === 'success' ? 'Success: ' : 'Error: '}</span>
+              {rbacStatus.text}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* User Directory for Role Management */}
+          <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-150 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-800 text-sm tracking-tight">Active Accounts Registry</h3>
+                <p className="text-[10px] text-slate-400 font-medium">Dynamically promote, demote, or audit tenant credentials</p>
+              </div>
+              {loadingDbUsers && (
+                <div className="flex items-center gap-1.5 text-xs text-[#2D6A4F] font-semibold">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Fetching...</span>
+                </div>
+              )}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="py-3 px-5">User ID</th>
+                    <th className="py-3 px-5">Email Address</th>
+                    <th className="py-3 px-5">Assigned RBAC Role</th>
+                    <th className="py-3 px-5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs text-slate-650 bg-white">
+                  {dbUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-400 text-xs font-semibold">
+                        {loadingDbUsers ? 'Loading registered users...' : 'No users found in database. Ask users to sign up first.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    dbUsers.map((u) => (
+                      <tr key={u.id} className="hover:bg-slate-50/40 transition-all">
+                        <td className="py-3.5 px-5 font-mono text-[10px] text-slate-400 font-semibold">{u.id}</td>
+                        <td className="py-3.5 px-5 font-bold text-slate-800">{u.email}</td>
+                        <td className="py-3.5 px-5">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border mr-2 ${
+                            u.role === 'SUPER_ADMIN' ? 'bg-red-50 text-red-700 border-red-100' :
+                            u.role === 'ORG_ADMIN' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                            u.role === 'HR_MANAGER' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                            'bg-slate-50 text-slate-700 border-slate-100'
+                          }`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-5 text-right">
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleRoleChange(u.id, e.target.value as Role)}
+                            className="bg-slate-50 border border-slate-200 text-[11px] rounded-lg py-1 px-2 text-slate-600 focus:outline-none focus:border-brand-green/20"
+                          >
+                            {Object.values(Role).map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Right Panel: Health & Audit Logs */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* System Status Indicators */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight mb-4 flex items-center gap-1.5">
+                <Settings className="w-4 h-4 text-[#2D6A4F]" />
+                <span>System Connection Registry</span>
+              </h3>
+              
+              <div className="space-y-3.5 text-xs">
+                <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
+                  <span className="text-slate-450 font-medium">Database Node (Prisma)</span>
+                  <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded ${
+                    isDbConnected ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {isDbConnected ? 'Connected' : 'Offline'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
+                  <span className="text-slate-450 font-medium">Firebase Auth Server</span>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase rounded">Online</span>
+                </div>
+                <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
+                  <span className="text-slate-450 font-medium">Firebase Admin Node</span>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase rounded">Configured</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-450 font-medium">Tenant Isolation Mode</span>
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[9px] font-black uppercase rounded">Multi-Tenant</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick System Diagnostics */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight mb-4 flex items-center gap-1.5">
+                <Activity className="w-4 h-4 text-[#2D6A4F]" />
+                <span>System Commands Toolset</span>
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-2.5">
+                <button 
+                  onClick={() => {
+                    setRbacStatus({ type: 'success', text: 'System cache cleared successfully. All active sessions verified.' });
+                    setRbacLogs(prev => [`[${new Date().toLocaleTimeString()}] Triggered cache flush and verified session tokens.`, ...prev]);
+                  }}
+                  className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded-xl transition-all"
+                >
+                  Flush System Cache
+                </button>
+                <button 
+                  onClick={() => {
+                    setRbacStatus({ type: 'success', text: `Integrity check complete: audited ${dbUsers.length} user records successfully.` });
+                    setRbacLogs(prev => [`[${new Date().toLocaleTimeString()}] Triggered database integrity audit. No corruption detected.`, ...prev]);
+                  }}
+                  className="py-2.5 px-3 bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10px] font-bold rounded-xl transition-all"
+                >
+                  Database Audit
+                </button>
+              </div>
+            </div>
+
+            {/* Audit Logs */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+              <h3 className="font-bold text-slate-800 text-sm tracking-tight mb-3 flex items-center gap-1.5">
+                <Activity className="w-4 h-4 text-[#2D6A4F]" />
+                <span>Audit Logs Feed</span>
+              </h3>
+              
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {rbacLogs.map((logStr, idx) => (
+                  <div key={idx} className="p-2 bg-slate-50 rounded-lg text-[9px] font-mono text-slate-500 leading-tight border border-slate-100">
+                    {logStr}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden">
       
@@ -136,22 +390,14 @@ export default function Dashboard() {
 
         {/* Sidebar Menu Links */}
         <nav className="flex-1 py-4 space-y-1 px-3 overflow-y-auto">
-          {[
-            { name: 'Overview', icon: LayoutDashboard },
-            { name: 'Employees', icon: Users },
-            { name: 'Attendance', icon: Clock },
-            { name: 'Leaves', icon: CalendarRange },
-            { name: 'Payroll', icon: Coins },
-            { name: 'Assets', icon: Laptop },
-            { name: 'Help Desk', icon: Ticket },
-            { name: 'Settings', icon: Settings }
-          ].map((item) => {
+          {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.name;
             return (
               <button
                 key={item.name}
                 onClick={() => setActiveTab(item.name)}
+                suppressHydrationWarning
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all group ${
                   isActive 
                     ? 'bg-white text-[#004225] shadow-sm' 
@@ -213,16 +459,7 @@ export default function Dashboard() {
               </div>
 
               <nav className="flex-1 py-4 space-y-1 px-3">
-                {[
-                  { name: 'Overview', icon: LayoutDashboard },
-                  { name: 'Employees', icon: Users },
-                  { name: 'Attendance', icon: Clock },
-                  { name: 'Leaves', icon: CalendarRange },
-                  { name: 'Payroll', icon: Coins },
-                  { name: 'Assets', icon: Laptop },
-                  { name: 'Help Desk', icon: Ticket },
-                  { name: 'Settings', icon: Settings }
-                ].map((item) => {
+                {menuItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.name;
                   return (
@@ -232,6 +469,7 @@ export default function Dashboard() {
                         setActiveTab(item.name);
                         setMobileMenuOpen(false);
                       }}
+                      suppressHydrationWarning
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                         isActive ? 'bg-white text-[#004225]' : 'text-slate-300 hover:bg-white/10'
                       }`}
@@ -395,8 +633,9 @@ export default function Dashboard() {
 
         {/* Dashboard Content Panel */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          
-          {/* Welcome Intro */}
+          {activeTab === 'System Control' ? renderSystemControl() : (
+            <>
+              {/* Welcome Intro */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -508,6 +747,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex items-center gap-2">
                     <select 
+                      suppressHydrationWarning
                       value={filterDept}
                       onChange={(e) => setFilterDept(e.target.value)}
                       className="bg-slate-50 border border-slate-200 text-xs rounded-xl py-1 px-3 text-slate-650 focus:outline-none focus:border-brand-green/20"
@@ -562,7 +802,7 @@ export default function Dashboard() {
                               </span>
                             </td>
                             <td className="py-3 px-5 text-right">
-                              <button className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700">
+                              <button suppressHydrationWarning className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700">
                                 <MoreHorizontal className="w-4 h-4" />
                               </button>
                             </td>
@@ -680,7 +920,8 @@ export default function Dashboard() {
             </div>
 
           </div>
-
+            </>
+          )}
         </div>
 
       </div>

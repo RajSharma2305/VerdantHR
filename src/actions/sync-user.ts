@@ -37,7 +37,9 @@ export async function syncUserAction(idToken: string) {
     // Upsert User in database
     const user = await prisma.user.upsert({
       where: { firebaseUid: uid },
-      update: {},
+      update: {
+        role: roleToAssign,
+      },
       create: {
         firebaseUid: uid,
         email: email,

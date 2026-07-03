@@ -159,25 +159,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setRole(result.user.role);
           } else {
             console.warn('Sync failed, using fallback role:', result.error);
+            const fallbackRole = getMockRole(fbUser.email);
             setUser({
               uid: fbUser.uid,
               email: fbUser.email,
               displayName: fbUser.displayName,
               photoURL: fbUser.photoURL,
-              role: 'EMPLOYEE',
+              role: fallbackRole,
             });
-            setRole('EMPLOYEE');
+            setRole(fallbackRole);
           }
         } catch (error) {
           console.error('Error in auth state listener:', error);
+          const fallbackRole = getMockRole(fbUser.email);
           setUser({
             uid: fbUser.uid,
             email: fbUser.email,
             displayName: fbUser.displayName,
             photoURL: fbUser.photoURL,
-            role: 'EMPLOYEE',
+            role: fallbackRole,
           });
-          setRole('EMPLOYEE');
+          setRole(fallbackRole);
         }
       } else {
         setUser(null);
