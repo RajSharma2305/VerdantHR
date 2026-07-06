@@ -388,7 +388,7 @@ export default function Home() {
               </div>
 
               <div className="mt-4 pt-1 border-t border-slate-850">
-                <button className="flex items-center justify-between w-full text-left text-[11px] text-indigo-400 hover:text-indigo-300 font-medium group transition-all">
+                <button suppressHydrationWarning className="flex items-center justify-between w-full text-left text-[11px] text-indigo-400 hover:text-indigo-300 font-medium group transition-all">
                   <span>Open Interactive Kanban Board</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-all" />
                 </button>
