@@ -116,7 +116,7 @@ export async function syncFirebaseUsersAction() {
   }
 }
 
-export async function createUserAction(email: string, role: Role) {
+export async function createUserAction(email: string, role: Role, password?: string) {
   try {
     if (!email) {
       return { success: false, error: 'Email is required' };
@@ -139,7 +139,7 @@ export async function createUserAction(email: string, role: Role) {
         const userRecord = await (adminAuth as Auth).createUser({
           email: email.toLowerCase(),
           emailVerified: true,
-          password: 'Password123!', // Standard initial temporary password
+          password: password || 'Password123!', 
         });
         firebaseUid = userRecord.uid;
         firebaseCreated = true;
@@ -157,13 +157,34 @@ export async function createUserAction(email: string, role: Role) {
         firebaseUid: firebaseUid
       }
     });
+
+    // Automatically create a matching Employee profile
+    const count = await prisma.employee.count();
+    const employeeId = `EMP${String(count + 1).padStart(3, '0')}`;
+    
+    const emailParts = email.split('@');
+    const namePart = emailParts[0];
+    const firstName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    
+    await prisma.employee.create({
+      data: {
+        employeeId,
+        userId: newUser.id,
+        email: email.toLowerCase(),
+        firstName,
+        lastName: 'Employee',
+        joiningDate: new Date(),
+        employmentType: 'Full-time',
+        status: 'Active',
+      },
+    });
     
     return { 
       success: true, 
       user: newUser, 
       firebaseCreated,
       message: firebaseCreated 
-        ? `Successfully registered user in Firebase and database. Temporary password: "Password123!"`
+        ? `Successfully registered user in Firebase and database. Password: "${password || 'Password123!'}"`
         : `Database user profile created in Mock development mode.`
     };
   } catch (error) {

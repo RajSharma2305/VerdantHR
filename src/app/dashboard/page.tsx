@@ -107,7 +107,8 @@ export default function Dashboard() {
 
   const [userForm, setUserForm] = useState({
     email: '',
-    role: 'EMPLOYEE' as Role
+    role: 'EMPLOYEE' as Role,
+    password: ''
   });
 
   const menuItems = [
@@ -218,7 +219,7 @@ export default function Dashboard() {
           setDesignations(configRes.designations || []);
         }
       } else if (activeTab === 'Attendance') {
-        const res = await getAttendanceListAction();
+        const res = await getAttendanceListAction(user?.email || undefined, selectedRole as Role);
         if (res.success && res.logs) setRealAttendance(res.logs);
       } else if (activeTab === 'Leaves') {
         const res = await getLeaveRequestsListAction();
@@ -334,10 +335,10 @@ export default function Dashboard() {
     e.preventDefault();
     setRbacStatus(null);
     try {
-      const res = await createUserAction(userForm.email, userForm.role);
+      const res = await createUserAction(userForm.email, userForm.role, userForm.password);
       if (res.success && res.user) {
         setIsUserModalOpen(false);
-        setUserForm({ email: '', role: 'EMPLOYEE' as Role });
+        setUserForm({ email: '', role: 'EMPLOYEE' as Role, password: '' });
         setRbacStatus({ type: 'success', text: res.message || `User ${userForm.email} successfully created.` });
         setRbacLogs(prev => [
           `[${new Date().toLocaleTimeString()}] Created user ${userForm.email} with role ${userForm.role}.`,
@@ -2127,6 +2128,17 @@ export default function Dashboard() {
                     placeholder="user@verdanthr.com"
                     value={userForm.email}
                     onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:outline-none focus:bg-white text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-455 uppercase mb-1">Password</label>
+                  <input 
+                    type="password" 
+                    placeholder="Min 6 characters (Optional)"
+                    value={userForm.password}
+                    onChange={(e) => setUserForm({...userForm, password: e.target.value})}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:outline-none focus:bg-white text-slate-800"
                   />
                 </div>

@@ -377,14 +377,59 @@ export async function createEmployeeAction(data: {
 // -------------------------------------------------------------
 // ATTENDANCE ACTIONS
 // -------------------------------------------------------------
-export async function getAttendanceListAction() {
-  try {
-    const logs = await prisma.attendance.findMany({
-      include: {
-        employee: true
+async function getOrCreateEmployeeProfile(email: string) {
+  let employee = await prisma.employee.findUnique({ where: { email } });
+  if (!employee) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return null;
+
+    const count = await prisma.employee.count();
+    const employeeId = `EMP${String(count + 1).padStart(3, '0')}`;
+    const emailParts = email.split('@');
+    const namePart = emailParts[0];
+    const firstName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+
+    employee = await prisma.employee.create({
+      data: {
+        employeeId,
+        userId: user.id,
+        email,
+        firstName,
+        lastName: 'Employee',
+        joiningDate: new Date(),
+        employmentType: 'Full-time',
+        status: 'Active',
       },
-      orderBy: { date: 'desc' }
     });
+  }
+  return employee;
+}
+
+export async function getAttendanceListAction(email?: string, role?: Role) {
+  try {
+    let logs: any[] = [];
+    if (role === Role.SUPER_ADMIN || role === Role.HR_MANAGER || role === Role.ORG_ADMIN) {
+      logs = await prisma.attendance.findMany({
+        include: {
+          employee: true
+        },
+        orderBy: { date: 'desc' }
+      });
+    } else if (email) {
+      const employee = await getOrCreateEmployeeProfile(email);
+      if (!employee) {
+        return { success: true, logs: [] };
+      }
+      logs = await prisma.attendance.findMany({
+        where: { employeeId: employee.id },
+        include: {
+          employee: true
+        },
+        orderBy: { date: 'desc' }
+      });
+    } else {
+      logs = [];
+    }
     return { success: true, logs };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to fetch attendance" };
@@ -393,7 +438,7 @@ export async function getAttendanceListAction() {
 
 export async function clockInAttendanceAction(employeeEmail: string) {
   try {
-    const employee = await prisma.employee.findUnique({ where: { email: employeeEmail } });
+    const employee = await getOrCreateEmployeeProfile(employeeEmail);
     if (!employee) return { success: false, error: "Employee profile not found for this email." };
 
     const todayDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
@@ -429,7 +474,7 @@ export async function clockInAttendanceAction(employeeEmail: string) {
 
 export async function clockOutAttendanceAction(employeeEmail: string) {
   try {
-    const employee = await prisma.employee.findUnique({ where: { email: employeeEmail } });
+    const employee = await getOrCreateEmployeeProfile(employeeEmail);
     if (!employee) return { success: false, error: "Employee profile not found for this email." };
 
     const todayDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
