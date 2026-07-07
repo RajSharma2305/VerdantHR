@@ -826,3 +826,198 @@ export async function getEmployeeDepartmentAction(email: string) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to load employee department" };
   }
 }
+
+export async function getNotificationsAction(email: string, role: Role) {
+  try {
+    const notifications: any[] = [];
+    
+    // Find the employee profile first
+    const employee = await prisma.employee.findUnique({
+      where: { email }
+    });
+
+    if (!employee && role !== Role.SUPER_ADMIN) {
+      return { success: true, notifications: [] };
+    }
+
+    const employeeId = employee?.id;
+
+    // 1. Leave Requests
+    let leaves;
+    if (role === Role.SUPER_ADMIN) {
+      leaves = await prisma.leaveRequest.findMany({
+        include: { employee: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+      });
+    } else {
+      leaves = await prisma.leaveRequest.findMany({
+        where: { employeeId },
+        include: { employee: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+      });
+    }
+
+    leaves.forEach(req => {
+      const time = req.createdAt;
+      const id = `leave-${req.id}`;
+      if (role === Role.SUPER_ADMIN) {
+        const text = `${req.employee.firstName} ${req.employee.lastName} applied for ${req.leaveType} leave. Status: ${req.status}`;
+        notifications.push({
+          id,
+          title: 'Leave Request Update',
+          text,
+          time,
+          createdAt: req.createdAt
+        });
+      } else {
+        const text = `Your leave request for ${req.leaveType} is ${req.status.toLowerCase()}.`;
+        notifications.push({
+          id,
+          title: 'Leave Request Status',
+          text,
+          time,
+          createdAt: req.createdAt
+        });
+      }
+    });
+
+    // 2. Assets
+    let assets;
+    if (role === Role.SUPER_ADMIN) {
+      assets = await prisma.asset.findMany({
+        where: { NOT: { allocatedToId: null } },
+        include: { allocatedTo: true },
+        orderBy: { updatedAt: 'desc' },
+        take: 10
+      });
+    } else {
+      assets = await prisma.asset.findMany({
+        where: { allocatedToId: employeeId },
+        include: { allocatedTo: true },
+        orderBy: { updatedAt: 'desc' },
+        take: 10
+      });
+    }
+
+    assets.forEach(asset => {
+      const time = asset.allocatedDate || asset.updatedAt || asset.createdAt;
+      const id = `asset-${asset.id}`;
+      if (role === Role.SUPER_ADMIN) {
+        const text = `Asset ${asset.name} (SN: ${asset.serialNumber}) is assigned to ${asset.allocatedTo?.firstName} ${asset.allocatedTo?.lastName}.`;
+        notifications.push({
+          id,
+          title: 'IT Asset Assignment',
+          text,
+          time,
+          createdAt: time
+        });
+      } else {
+        const text = `Asset ${asset.name} (SN: ${asset.serialNumber}) has been assigned to you.`;
+        notifications.push({
+          id,
+          title: 'Asset Allocated',
+          text,
+          time,
+          createdAt: time
+        });
+      }
+    });
+
+    // 3. Payrolls
+    let payrolls;
+    if (role === Role.SUPER_ADMIN) {
+      payrolls = await prisma.payroll.findMany({
+        include: { employee: true },
+        orderBy: { updatedAt: 'desc' },
+        take: 10
+      });
+    } else {
+      payrolls = await prisma.payroll.findMany({
+        where: { employeeId },
+        include: { employee: true },
+        orderBy: { updatedAt: 'desc' },
+        take: 10
+      });
+    }
+
+    payrolls.forEach(payroll => {
+      const time = payroll.updatedAt || payroll.createdAt;
+      const id = `payroll-${payroll.id}`;
+      const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const monthStr = monthNames[payroll.month] || `Month ${payroll.month}`;
+      
+      if (role === Role.SUPER_ADMIN) {
+        const text = `Payroll status for ${payroll.employee.firstName} ${payroll.employee.lastName} updated to ${payroll.status} for ${monthStr} ${payroll.year}.`;
+        notifications.push({
+          id,
+          title: 'Payroll Updated',
+          text,
+          time,
+          createdAt: time
+        });
+      } else {
+        const text = `Your payslip for ${monthStr} ${payroll.year} is ${payroll.status.toLowerCase()}.`;
+        notifications.push({
+          id,
+          title: 'Payslip Released',
+          text,
+          time,
+          createdAt: time
+        });
+      }
+    });
+
+    // 4. Help Tickets
+    let tickets;
+    if (role === Role.SUPER_ADMIN) {
+      tickets = await prisma.helpTicket.findMany({
+        include: { raisedBy: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+      });
+    } else {
+      tickets = await prisma.helpTicket.findMany({
+        where: { raisedById: employeeId },
+        include: { raisedBy: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10
+      });
+    }
+
+    tickets.forEach(ticket => {
+      const time = ticket.updatedAt || ticket.createdAt;
+      const id = `ticket-${ticket.id}`;
+      if (role === Role.SUPER_ADMIN) {
+        const text = `Ticket #${ticket.id.slice(-4)}: "${ticket.title}" raised by ${ticket.raisedBy?.firstName} ${ticket.raisedBy?.lastName}. Status: ${ticket.status}`;
+        notifications.push({
+          id,
+          title: 'Help Desk Ticket',
+          text,
+          time,
+          createdAt: time
+        });
+      } else {
+        const text = `Your ticket "${ticket.title}" status is ${ticket.status.toLowerCase()}.`;
+        notifications.push({
+          id,
+          title: 'Ticket Status Update',
+          text,
+          time,
+          createdAt: time
+        });
+      }
+    });
+
+    // Sort all notifications by createdAt desc
+    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    // Take top 15
+    const finalNotifications = notifications.slice(0, 15);
+
+    return { success: true, notifications: finalNotifications };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to load notifications" };
+  }
+}

@@ -37,7 +37,8 @@ import {
   createTicketAction,
   updateTicketStatusAction,
   getDeptsAndDesigsAction,
-  getEmployeeDepartmentAction
+  getEmployeeDepartmentAction,
+  getNotificationsAction
 } from '@/actions/features';
 
 export default function Dashboard() {
@@ -134,11 +135,7 @@ export default function Dashboard() {
   ]);
 
   // Simulated notifications
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'New Leave Request', text: 'Rahul Sharma applied for 3 days of Casual Leave', time: '10m ago', read: false },
-    { id: 2, title: 'IT Asset Audit', message: 'MacBook Pro SN: MB-2026-X83 assigned to Priya Singh', time: '1h ago', read: false },
-    { id: 3, title: 'June Payroll Ready', message: 'VerdantHR payroll calculations generated', time: '4h ago', read: true }
-  ]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // AI Chat states
   const [chatMessages, setChatMessages] = useState([
@@ -147,7 +144,8 @@ export default function Dashboard() {
   const [chatInput, setChatInput] = useState('');
   const [isAiTyping, setIsAiTyping] = useState(false);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const [readNotifications, setReadNotifications] = useState<string[]>([]);
+  const unreadCount = notifications.filter(n => !readNotifications.includes(n.id)).length;
 
   const handleToggleTask = (id: string) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
@@ -200,10 +198,53 @@ export default function Dashboard() {
     )
   );
 
+  const formatRelativeTime = (dateInput: Date | string) => {
+    const date = new Date(dateInput);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
+  const fetchNotifications = async () => {
+    if (!user?.email) return;
+    try {
+      const res = await getNotificationsAction(user.email, selectedRole as Role);
+      if (res.success && res.notifications) {
+        setNotifications(res.notifications);
+      }
+    } catch (e) {
+      console.error("Failed to fetch live notifications:", e);
+    }
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem('read_notifications');
+    if (saved) {
+      try {
+        setReadNotifications(JSON.parse(saved));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [user?.email, selectedRole]);
+
   // Fetch Database Data for Active Tab
   const fetchTabData = async () => {
     setLoadingTab(true);
     setRbacStatus(null);
+    fetchNotifications();
     try {
       if (activeTab === 'Overview') {
         const res = await getOverviewStatsAction();
@@ -2373,22 +2414,35 @@ export default function Dashboard() {
                     <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-705">Notifications</span>
                       <button 
-                        onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
+                        onClick={() => {
+                          const allIds = notifications.map(n => n.id);
+                          setReadNotifications(allIds);
+                          localStorage.setItem('read_notifications', JSON.stringify(allIds));
+                        }}
                         className="text-[10px] font-bold text-[#2D6A4F] hover:underline"
                       >
                         Mark all as read
                       </button>
                     </div>
                     <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
-                      {notifications.map(n => (
-                        <div key={n.id} className={`p-3.5 text-xs hover:bg-slate-50/50 transition-all ${!n.read ? 'bg-emerald-500/5' : ''}`}>
-                          <div className="flex justify-between items-start">
-                            <span className="font-bold text-slate-800">{n.title}</span>
-                            <span className="text-[9px] text-slate-400">{n.time}</span>
-                          </div>
-                          <p className="text-slate-505 text-[11px] mt-0.5">{n.text || n.message}</p>
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-center text-slate-400 text-xs">
+                          No notifications
                         </div>
-                      ))}
+                      ) : (
+                        notifications.map(n => {
+                          const isRead = readNotifications.includes(n.id);
+                          return (
+                            <div key={n.id} className={`p-3.5 text-xs hover:bg-slate-50/50 transition-all ${!isRead ? 'bg-emerald-500/5' : ''}`}>
+                              <div className="flex justify-between items-start">
+                                <span className="font-bold text-slate-800">{n.title}</span>
+                                <span className="text-[9px] text-slate-400">{formatRelativeTime(n.time)}</span>
+                              </div>
+                              <p className="text-slate-505 text-[11px] mt-0.5">{n.text}</p>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </motion.div>
                 )}
