@@ -522,14 +522,34 @@ export async function clockOutAttendanceAction(employeeEmail: string) {
 // -------------------------------------------------------------
 // LEAVES ACTIONS
 // -------------------------------------------------------------
-export async function getLeaveRequestsListAction() {
+export async function getLeaveRequestsListAction(email?: string, role?: Role) {
   try {
-    const requests = await prisma.leaveRequest.findMany({
-      include: {
-        employee: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    let requests: any[] = [];
+    
+    if (role === Role.SUPER_ADMIN) {
+      requests = await prisma.leaveRequest.findMany({
+        include: {
+          employee: true
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+    } else if (email) {
+      const employee = await prisma.employee.findUnique({
+        where: { email }
+      });
+      if (!employee) {
+        return { success: true, requests: [] };
+      }
+      
+      requests = await prisma.leaveRequest.findMany({
+        where: { employeeId: employee.id },
+        include: {
+          employee: true
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+    }
+    
     return { success: true, requests };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to fetch leave requests" };
@@ -566,13 +586,24 @@ export async function createLeaveRequestAction(data: {
 
 export async function updateLeaveStatusAction(requestId: string, newStatus: LeaveStatus, approverEmail: string) {
   try {
-    const approver = await prisma.employee.findUnique({ where: { email: approverEmail } });
+    const approver = await prisma.employee.findUnique({
+      where: { email: approverEmail },
+      include: { user: true }
+    });
     
+    if (!approver) {
+      return { success: false, error: "Approver employee profile not found." };
+    }
+
+    if (approver.user?.role === Role.EMPLOYEE) {
+      return { success: false, error: "Employees do not have access to approve or reject leaves." };
+    }
+
     const request = await prisma.leaveRequest.update({
       where: { id: requestId },
       data: {
         status: newStatus,
-        approvedById: approver ? approver.id : undefined
+        approvedById: approver.id
       }
     });
 

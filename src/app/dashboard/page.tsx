@@ -222,7 +222,7 @@ export default function Dashboard() {
         const res = await getAttendanceListAction(user?.email || undefined, selectedRole as Role);
         if (res.success && res.logs) setRealAttendance(res.logs);
       } else if (activeTab === 'Leaves') {
-        const res = await getLeaveRequestsListAction();
+        const res = await getLeaveRequestsListAction(user?.email || undefined, selectedRole as Role);
         if (res.success && res.requests) setRealLeaves(res.requests);
       } else if (activeTab === 'Payroll') {
         const res = await getPayrollsListAction();
@@ -1175,7 +1175,7 @@ export default function Dashboard() {
                         </span>
                       </td>
                       <td className="py-3.5 px-5 text-right space-x-1.5">
-                        {req.status === 'PENDING' && (
+                        {req.status === 'PENDING' && selectedRole !== 'EMPLOYEE' && (
                           <>
                             <button
                               onClick={() => handleApproveLeave(req.id, true)}

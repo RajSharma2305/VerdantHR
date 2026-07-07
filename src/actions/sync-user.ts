@@ -21,7 +21,7 @@ export async function syncUserAction(idToken: string) {
     // Determine the role to assign on creation
     let roleToAssign: Role = Role.EMPLOYEE;
     const lowerEmail = email.toLowerCase();
-    
+
     if (lowerEmail.includes('superadmin')) {
       roleToAssign = Role.SUPER_ADMIN;
     } else if (lowerEmail.includes('admin')) {
@@ -66,11 +66,11 @@ export async function syncUserAction(idToken: string) {
       // Generate a unique employee code
       const count = await prisma.employee.count();
       const employeeId = `EMP${String(count + 1).padStart(3, '0')}`;
-      
+
       const emailParts = email.split('@');
       const namePart = emailParts[0];
       const firstName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-      
+
       await prisma.employee.create({
         data: {
           employeeId,
