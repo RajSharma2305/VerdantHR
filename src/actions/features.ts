@@ -558,7 +558,7 @@ export async function getLeaveRequestsListAction(email?: string, role?: Role) {
       });
     }
     
-    return { success: true, requests };
+    return { success: true, requests: JSON.parse(JSON.stringify(requests)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to fetch leave requests" };
   }
@@ -636,7 +636,7 @@ export async function updateLeaveStatusAction(requestId: string, newStatus: Leav
       }
     });
 
-    return { success: true, request };
+    return { success: true, request: JSON.parse(JSON.stringify(request)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to update leave status" };
   }
@@ -670,7 +670,7 @@ export async function getPayrollsListAction(email?: string, role?: Role) {
         orderBy: { year: 'desc', month: 'desc' }
       });
     }
-    return { success: true, payrolls };
+    return { success: true, payrolls: JSON.parse(JSON.stringify(payrolls)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to fetch payrolls" };
   }
@@ -726,7 +726,7 @@ export async function createPayrollAction(data: {
       }
     });
 
-    return { success: true, payroll };
+    return { success: true, payroll: JSON.parse(JSON.stringify(payroll)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to calculate payroll" };
   }
@@ -749,7 +749,7 @@ export async function updatePayrollStatusAction(payrollId: string, newStatus: st
       where: { id: payrollId },
       data: { status: newStatus }
     });
-    return { success: true, payroll: updated };
+    return { success: true, payroll: JSON.parse(JSON.stringify(updated)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to update payroll status" };
   }

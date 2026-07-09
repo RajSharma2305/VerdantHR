@@ -256,7 +256,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         auth, 
         rememberMe ? browserLocalPersistence : browserSessionPersistence
       );
-      await signInWithEmailAndPassword(auth, email, password);
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (fbErr: any) {
+        let cleanMsg = "Invalid email or password.";
+        if (fbErr?.code === 'auth/invalid-credential') {
+          cleanMsg = "The email or password you entered is incorrect.";
+        } else if (fbErr?.message) {
+          cleanMsg = fbErr.message;
+        }
+        throw new Error(cleanMsg);
+      }
     } finally {
       setLoading(false);
     }

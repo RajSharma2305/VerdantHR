@@ -185,7 +185,7 @@ export async function createUserAction(email: string, role: Role, password?: str
     
     return { 
       success: true, 
-      user: newUser, 
+      user: JSON.parse(JSON.stringify(newUser)), 
       firebaseCreated,
       message: firebaseCreated 
         ? `Successfully registered user in Firebase and database. Password: "${password || 'Password123!'}"`
