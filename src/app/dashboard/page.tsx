@@ -2474,21 +2474,25 @@ export default function Dashboard() {
                     <span>Fetching...</span>
                   </div>
                 )}
-                <button
-                  onClick={() => setIsUserModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-[#2D6A4F] hover:bg-[#204f3b] text-white text-[10px] font-bold rounded-xl transition-all shadow-xs flex-shrink-0 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add User</span>
-                </button>
-                <button
-                  onClick={handleSyncFirebaseUsers}
-                  disabled={syncingFirebase || loadingDbUsers}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-[#2D6A4F]/10 hover:bg-[#2D6A4F]/20 text-[#2D6A4F] hover:text-[#1B4332] text-[10px] font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-[#2D6A4F]/15 flex-shrink-0 cursor-pointer"
-                >
-                  <RefreshCw className={`w-3 h-3 ${syncingFirebase ? 'animate-spin' : ''}`} />
-                  <span>{syncingFirebase ? 'Syncing...' : 'Sync Firebase Users'}</span>
-                </button>
+                {selectedRole === 'SUPER_ADMIN' && (
+                  <>
+                    <button
+                      onClick={() => setIsUserModalOpen(true)}
+                      className="flex items-center gap-1.5 px-3 py-1 bg-[#2D6A4F] hover:bg-[#204f3b] text-white text-[10px] font-bold rounded-xl transition-all shadow-xs flex-shrink-0 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add User</span>
+                    </button>
+                    <button
+                      onClick={handleSyncFirebaseUsers}
+                      disabled={syncingFirebase || loadingDbUsers}
+                      className="flex items-center gap-1.5 px-3 py-1 bg-[#2D6A4F]/10 hover:bg-[#2D6A4F]/20 text-[#2D6A4F] hover:text-[#1B4332] text-[10px] font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-[#2D6A4F]/15 flex-shrink-0 cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${syncingFirebase ? 'animate-spin' : ''}`} />
+                      <span>{syncingFirebase ? 'Syncing...' : 'Sync Firebase Users'}</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -2511,9 +2515,7 @@ export default function Dashboard() {
                     </tr>
                   ) : (
                     dbUsers.map((u) => {
-                      const isSuperAdminTarget = u.role === 'SUPER_ADMIN';
-                      const isOrgAdminCaller = selectedRole === 'ORG_ADMIN';
-                      const disableActions = isSuperAdminTarget && isOrgAdminCaller;
+                      const disableActions = selectedRole !== 'SUPER_ADMIN';
 
                       return (
                         <tr key={u.id} className="hover:bg-slate-50/40 transition-all">
@@ -2548,7 +2550,7 @@ export default function Dashboard() {
                                   onClick={() => handleDeleteUser(u.id, u.email)}
                                   disabled={disableActions}
                                   className="px-2 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-755 rounded-lg font-black text-[9px] uppercase border border-red-500/15 disabled:opacity-50 disabled:cursor-not-allowed"
-                                  title={disableActions ? "You do not have permissions to delete a SUPER_ADMIN" : "Delete User"}
+                                  title={disableActions ? "You do not have permission to manage user roles or credentials" : "Delete User"}
                                 >
                                   Delete
                                 </button>
