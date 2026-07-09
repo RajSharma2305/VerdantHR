@@ -322,7 +322,7 @@ export async function getEmployeesListAction() {
       },
       orderBy: { employeeId: 'asc' }
     });
-    return { success: true, employees };
+    return { success: true, employees: JSON.parse(JSON.stringify(employees)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to fetch employees" };
   }
@@ -647,6 +647,7 @@ export async function updateLeaveStatusAction(requestId: string, newStatus: Leav
 // -------------------------------------------------------------
 export async function getPayrollsListAction(email?: string, role?: Role) {
   try {
+    console.log("[PAYROLL_DEBUG] getPayrollsListAction email:", email, "role:", role);
     let payrolls: any[] = [];
     if (role === Role.SUPER_ADMIN || role === Role.ORG_ADMIN || role === Role.HR_MANAGER) {
       payrolls = await prisma.payroll.findMany({
@@ -766,7 +767,7 @@ export async function getAssetsListAction() {
       },
       orderBy: { name: 'asc' }
     });
-    return { success: true, assets };
+    return { success: true, assets: JSON.parse(JSON.stringify(assets)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to fetch assets" };
   }
@@ -786,7 +787,7 @@ export async function createAssetAction(data: {
         status: AssetStatus.AVAILABLE
       }
     });
-    return { success: true, asset };
+    return { success: true, asset: JSON.parse(JSON.stringify(asset)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to add asset" };
   }
@@ -802,7 +803,7 @@ export async function assignAssetAction(assetId: string, employeeId: string | nu
         allocatedDate: employeeId ? new Date() : null
       }
     });
-    return { success: true, asset: updated };
+    return { success: true, asset: JSON.parse(JSON.stringify(updated)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to assign asset" };
   }
@@ -820,7 +821,7 @@ export async function getTicketsListAction() {
       },
       orderBy: { createdAt: 'desc' }
     });
-    return { success: true, tickets };
+    return { success: true, tickets: JSON.parse(JSON.stringify(tickets)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to fetch tickets" };
   }
@@ -848,7 +849,7 @@ export async function createTicketAction(data: {
       }
     });
 
-    return { success: true, ticket };
+    return { success: true, ticket: JSON.parse(JSON.stringify(ticket)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to raise support ticket" };
   }
@@ -869,7 +870,7 @@ export async function updateTicketStatusAction(ticketId: string, newStatus: Tick
       }
     });
 
-    return { success: true, ticket };
+    return { success: true, ticket: JSON.parse(JSON.stringify(ticket)) };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to update ticket status" };
   }
@@ -882,7 +883,11 @@ export async function getDeptsAndDesigsAction() {
   try {
     const departments = await prisma.department.findMany({ orderBy: { name: 'asc' } });
     const designations = await prisma.designation.findMany({ orderBy: { title: 'asc' } });
-    return { success: true, departments, designations };
+    return { 
+      success: true, 
+      departments: JSON.parse(JSON.stringify(departments)), 
+      designations: JSON.parse(JSON.stringify(designations)) 
+    };
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : "Failed to load config details" };
   }
