@@ -3244,6 +3244,7 @@ export default function Dashboard() {
             )}
             <button 
               onClick={signOut}
+              suppressHydrationWarning
               className="p-1.5 rounded-lg bg-white/10 hover:bg-red-500/20 text-slate-305 hover:text-red-300 transition-all focus:outline-none ml-auto"
             >
               <LogOut className="w-4 h-4" />
@@ -3309,7 +3310,7 @@ export default function Dashboard() {
                     <span className="text-xs font-bold text-white">{user?.email?.split('@')[0]}</span>
                     <span className="text-[9px] text-[#2D6A4F] bg-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider mt-0.5">{selectedRole}</span>
                   </div>
-                  <button onClick={signOut} className="p-2 rounded bg-white/10 hover:bg-red-500/20 text-slate-300">
+                  <button onClick={signOut} suppressHydrationWarning className="p-2 rounded bg-white/10 hover:bg-red-500/20 text-slate-300">
                     <LogOut className="w-4.5 h-4.5" />
                   </button>
                 </div>

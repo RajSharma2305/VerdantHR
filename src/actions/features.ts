@@ -710,7 +710,9 @@ export async function createPayrollAction(data: {
     const tax = basic * 0.1;
     const net = (basic + hra) - (pf + tax + 200);
 
-    const status = data.creatorRole === Role.ORG_ADMIN ? 'Pending Approval' : 'Draft';
+    const status = data.creatorRole === Role.SUPER_ADMIN 
+      ? 'Approved' 
+      : (data.creatorRole === Role.ORG_ADMIN ? 'Pending Approval' : 'Draft');
 
     const payroll = await prisma.payroll.create({
       data: {
