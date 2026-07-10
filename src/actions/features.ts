@@ -378,14 +378,15 @@ export async function createEmployeeAction(data: {
 // ATTENDANCE ACTIONS
 // -------------------------------------------------------------
 async function getOrCreateEmployeeProfile(email: string) {
-  let employee = await prisma.employee.findUnique({ where: { email } });
+  const lowerEmail = email.toLowerCase();
+  let employee = await prisma.employee.findUnique({ where: { email: lowerEmail } });
   if (!employee) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: lowerEmail } });
     if (!user) return null;
 
     const count = await prisma.employee.count();
     const employeeId = `EMP${String(count + 1).padStart(3, '0')}`;
-    const emailParts = email.split('@');
+    const emailParts = lowerEmail.split('@');
     const namePart = emailParts[0];
     const firstName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
 
@@ -393,7 +394,7 @@ async function getOrCreateEmployeeProfile(email: string) {
       data: {
         employeeId,
         userId: user.id,
-        email,
+        email: lowerEmail,
         firstName,
         lastName: 'Employee',
         joiningDate: new Date(),
@@ -539,7 +540,7 @@ export async function getLeaveRequestsListAction(email?: string, role?: Role) {
       });
     } else if (email) {
       const employee = await prisma.employee.findUnique({
-        where: { email }
+        where: { email: email.toLowerCase() }
       });
       if (!employee) {
         return { success: true, requests: [] };
@@ -658,7 +659,7 @@ export async function getPayrollsListAction(email?: string, role?: Role) {
       });
     } else if (email) {
       const employee = await prisma.employee.findUnique({
-        where: { email }
+        where: { email: email.toLowerCase() }
       });
       if (!employee) {
         return { success: true, payrolls: [] };
@@ -996,7 +997,7 @@ export async function getDeptsAndDesigsAction() {
 export async function getEmployeeDepartmentAction(email: string) {
   try {
     const employee = await prisma.employee.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
       include: { department: true }
     });
     if (!employee) return { success: false, error: "Employee profile not found" };
@@ -1016,7 +1017,7 @@ export async function getNotificationsAction(email: string, role: Role) {
     
     // Find the employee profile first
     const employee = await prisma.employee.findUnique({
-      where: { email }
+      where: { email: email.toLowerCase() }
     });
 
     const isAdminRole = role === Role.SUPER_ADMIN || role === Role.ORG_ADMIN;

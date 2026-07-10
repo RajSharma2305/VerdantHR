@@ -348,7 +348,7 @@ export default function Dashboard() {
   useEffect(() => {
     setRbacStatus(null);
     fetchTabData();
-  }, [activeTab]);
+  }, [activeTab, user?.email, selectedRole]);
 
   // Seeder Trigger
   const handleSeedData = async () => {
