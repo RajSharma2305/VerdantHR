@@ -1895,7 +1895,9 @@ export default function Dashboard() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:outline-none focus:bg-white text-slate-600 cursor-pointer"
                   >
                     <option value="Draft">Draft</option>
-                    <option value="Pending Approval">Pending Approval</option>
+                    {selectedPayrollForStatus.status === 'Pending Approval' && (
+                      <option value="Pending Approval">Pending Approval</option>
+                    )}
                     <option value="Approved">Approved</option>
                     <option value="Paid">Paid</option>
                   </select>
