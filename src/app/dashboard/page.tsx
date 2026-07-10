@@ -37,6 +37,7 @@ import {
   requestAssetAction,
   approveAssetRequestAction,
   rejectAssetRequestAction,
+  requestNewAssetAction,
   getTicketsListAction,
   createTicketAction,
   updateTicketStatusAction,
@@ -87,6 +88,7 @@ export default function Dashboard() {
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [isRequestAssetModalOpen, setIsRequestAssetModalOpen] = useState(false);
   const [isPayrollModalOpen, setIsPayrollModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -115,6 +117,11 @@ export default function Dashboard() {
   const [assetForm, setAssetForm] = useState({
     name: '',
     serialNumber: '',
+    type: 'Laptop'
+  });
+
+  const [requestAssetForm, setRequestAssetForm] = useState({
+    name: '',
     type: 'Laptop'
   });
 
@@ -841,6 +848,36 @@ export default function Dashboard() {
       }
     } catch (err) {
       setRbacStatus({ type: 'error', text: 'Error declining asset request.' });
+    }
+  };
+
+  const handleRequestNewAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.email) return;
+    setRbacStatus(null);
+
+    const currentEmployee = realEmployees.find((e: any) => e.email === user.email);
+    if (!currentEmployee) {
+      setRbacStatus({ type: 'error', text: 'Active employee profile not found.' });
+      return;
+    }
+
+    try {
+      const res = await requestNewAssetAction({
+        name: requestAssetForm.name,
+        type: requestAssetForm.type,
+        employeeId: currentEmployee.id
+      });
+      if (res.success) {
+        setIsRequestAssetModalOpen(false);
+        setRequestAssetForm({ name: '', type: 'Laptop' });
+        setRbacStatus({ type: 'success', text: 'Asset requested successfully.' });
+        fetchTabData();
+      } else {
+        setRbacStatus({ type: 'error', text: res.error || 'Failed to request new asset.' });
+      }
+    } catch (err) {
+      setRbacStatus({ type: 'error', text: 'Error requesting new asset.' });
     }
   };
 
@@ -1799,15 +1836,26 @@ export default function Dashboard() {
             </h2>
             <p className="text-xs text-slate-500 font-medium">Verify hardware/software asset connection states and assign configurations to staff profiles</p>
           </div>
-          {selectedRole !== 'EMPLOYEE' && (
-            <button
-              onClick={() => setIsAssetModalOpen(true)}
-              className="px-4 py-2 bg-[#2D6A4F] hover:bg-[#204f3b] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Asset</span>
-            </button>
-          )}
+          <div className="flex gap-2">
+            {selectedRole !== 'SUPER_ADMIN' && (
+              <button
+                onClick={() => setIsRequestAssetModalOpen(true)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-755 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Request Asset</span>
+              </button>
+            )}
+            {selectedRole !== 'EMPLOYEE' && (
+              <button
+                onClick={() => setIsAssetModalOpen(true)}
+                className="px-4 py-2 bg-[#2D6A4F] hover:bg-[#204f3b] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Asset</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Status Indicator Banner */}
@@ -1881,14 +1929,6 @@ export default function Dashboard() {
                                   className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 rounded-lg font-black text-[9px] uppercase border border-emerald-500/15 cursor-pointer"
                                 >
                                   Assign
-                                </button>
-                              )}
-                              {selectedRole !== 'SUPER_ADMIN' && (
-                                <button
-                                  onClick={() => handleRequestAsset(asset.id)}
-                                  className="px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 rounded-lg font-black text-[9px] uppercase border border-blue-500/15 cursor-pointer"
-                                >
-                                  Request
                                 </button>
                               )}
                             </>
@@ -2062,6 +2102,55 @@ export default function Dashboard() {
                   </select>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Request Asset Modal */}
+        {isRequestAssetModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-[350px] p-6 text-left">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-slate-800 text-sm">Request New Asset</h3>
+                <button onClick={() => setIsRequestAssetModalOpen(false)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-655 cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleRequestNewAsset} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-455 uppercase mb-1">Asset Name</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="e.g. MacBook Pro 16-inch"
+                    value={requestAssetForm.name}
+                    onChange={(e) => setRequestAssetForm({...requestAssetForm, name: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:outline-none focus:bg-white text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-455 uppercase mb-1">Asset Type</label>
+                  <select
+                    value={requestAssetForm.type}
+                    onChange={(e) => setRequestAssetForm({...requestAssetForm, type: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 focus:outline-none focus:bg-white text-slate-600 cursor-pointer"
+                  >
+                    <option value="Laptop">Laptop</option>
+                    <option value="Monitor">Monitor</option>
+                    <option value="Mobile Phone">Mobile Phone</option>
+                    <option value="Accessories">Accessories</option>
+                  </select>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="w-full mt-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+                >
+                  Submit Asset Request
+                </button>
+              </form>
             </div>
           </div>
         )}
@@ -3110,6 +3199,7 @@ export default function Dashboard() {
           </div>
           <button 
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            suppressHydrationWarning
             className="p-1 rounded bg-[#005c33] text-slate-355 hover:text-white transition-all focus:outline-none hidden md:block"
           >
             {sidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}

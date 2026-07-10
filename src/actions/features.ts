@@ -886,6 +886,29 @@ export async function rejectAssetRequestAction(assetId: string) {
   }
 }
 
+export async function requestNewAssetAction(data: {
+  name: string;
+  type: string;
+  employeeId: string;
+}) {
+  try {
+    const serialNumber = `REQ-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const asset = await prisma.asset.create({
+      data: {
+        name: data.name,
+        type: data.type,
+        serialNumber,
+        status: 'REQUESTED' as any,
+        allocatedToId: data.employeeId,
+        allocatedDate: new Date()
+      }
+    });
+    return { success: true, asset: JSON.parse(JSON.stringify(asset)) };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : "Failed to request new asset" };
+  }
+}
+
 // -------------------------------------------------------------
 // HELP DESK ACTIONS
 // -------------------------------------------------------------
