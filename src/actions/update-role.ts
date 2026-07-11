@@ -67,7 +67,7 @@ export async function getUsersAction() {
 }
 
 import { adminAuth } from '@/lib/firebase-admin';
-import { Auth } from 'firebase-admin/auth';
+import type { Auth } from 'firebase-admin/auth';
 
 export async function syncFirebaseUsersAction() {
   try {
