@@ -111,6 +111,32 @@ export async function syncFirebaseUsersAction() {
           }
         });
       }
+      
+      // Ensure matching Employee profile exists
+      const employee = await prisma.employee.findUnique({
+        where: { userId: updatedOrCreated.id }
+      });
+      if (!employee) {
+        const count = await prisma.employee.count();
+        const employeeId = `EMP${String(count + 1).padStart(3, '0')}`;
+        const emailParts = userRecord.email.split('@');
+        const namePart = emailParts[0] || 'Employee';
+        const firstName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+        
+        await prisma.employee.create({
+          data: {
+            employeeId,
+            userId: updatedOrCreated.id,
+            email: userRecord.email.toLowerCase(),
+            firstName,
+            lastName: 'Employee',
+            joiningDate: new Date(),
+            employmentType: 'Full-time',
+            status: 'Active',
+          }
+        });
+      }
+
       syncedUsers.push(updatedOrCreated);
     }
 
