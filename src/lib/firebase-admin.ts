@@ -1,5 +1,4 @@
-import { initializeApp, getApps, cert, ServiceAccount } from 'firebase-admin/app';
-import { getAuth, Auth } from 'firebase-admin/auth';
+import admin from 'firebase-admin';
 
 const firebaseAdminConfig = {
   projectId: process.env.FIREBASE_PROJECT_ID,
@@ -32,15 +31,15 @@ const mockAuthClient: CustomAuth = {
   }
 };
 
-let adminAuth: Auth | CustomAuth;
+let adminAuth: admin.auth.Auth | CustomAuth;
 
-if (!getApps().length) {
+if (!admin.apps.length) {
   if (hasValidCredentials) {
     try {
-      initializeApp({
-        credential: cert(firebaseAdminConfig as ServiceAccount),
+      admin.initializeApp({
+        credential: admin.credential.cert(firebaseAdminConfig as admin.ServiceAccount),
       });
-      adminAuth = getAuth();
+      adminAuth = admin.auth();
     } catch {
       console.warn('Failed to initialize Firebase Admin with credentials, falling back to mock auth client.');
       adminAuth = mockAuthClient;
@@ -51,7 +50,7 @@ if (!getApps().length) {
   }
 } else {
   try {
-    adminAuth = getAuth();
+    adminAuth = admin.auth();
   } catch {
     adminAuth = mockAuthClient;
   }
