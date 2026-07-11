@@ -66,11 +66,12 @@ export async function getUsersAction() {
   }
 }
 
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 import type { Auth } from 'firebase-admin/auth';
 
 export async function syncFirebaseUsersAction() {
   try {
+    const adminAuth = await getAdminAuth();
     if (!('listUsers' in adminAuth) || typeof (adminAuth as Auth).listUsers !== 'function') {
       return { success: false, error: 'Firebase Admin Auth is running in mock mode and cannot list users.' };
     }
@@ -122,6 +123,7 @@ export async function syncFirebaseUsersAction() {
 
 export async function createUserAction(email: string, role: Role, password?: string, creatorRole?: Role) {
   try {
+    const adminAuth = await getAdminAuth();
     if (!email) {
       return { success: false, error: 'Email is required' };
     }
@@ -199,6 +201,7 @@ export async function createUserAction(email: string, role: Role, password?: str
 
 export async function deleteUserAction(userId: string) {
   try {
+    const adminAuth = await getAdminAuth();
     if (!userId) {
       return { success: false, error: 'User ID is required' };
     }
@@ -354,6 +357,7 @@ export async function updateUserCredentialsAction(
   requesterRole?: Role
 ) {
   try {
+    const adminAuth = await getAdminAuth();
     if (!userId) {
       return { success: false, error: 'User ID is required' };
     }

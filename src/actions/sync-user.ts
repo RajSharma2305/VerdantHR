@@ -1,6 +1,6 @@
 'use server';
 
-import { adminAuth } from '@/lib/firebase-admin';
+import { getAdminAuth } from '@/lib/firebase-admin';
 import prisma from '@/lib/prisma';
 import { Role } from '@prisma/client';
 
@@ -11,6 +11,7 @@ export async function syncUserAction(idToken: string) {
     }
 
     // Verify token with Firebase Admin
+    const adminAuth = await getAdminAuth();
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     const { uid, email } = decodedToken;
 
