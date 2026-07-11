@@ -42,8 +42,8 @@ if (!getApps().length) {
         credential: cert(firebaseAdminConfig as ServiceAccount),
       });
       adminAuth = (admin as any).auth();
-    } catch {
-      console.warn('Failed to initialize Firebase Admin with credentials, falling back to mock auth client.');
+    } catch (err) {
+      console.error('Firebase Admin initialization failed:', err);
       adminAuth = mockAuthClient;
     }
   } else {
@@ -53,7 +53,8 @@ if (!getApps().length) {
 } else {
   try {
     adminAuth = (admin as any).auth();
-  } catch {
+  } catch (err) {
+    console.error('Firebase Admin getAuth failed:', err);
     adminAuth = mockAuthClient;
   }
 }
