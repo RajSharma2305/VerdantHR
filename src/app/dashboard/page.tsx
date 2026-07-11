@@ -1382,8 +1382,12 @@ export default function Dashboard() {
                           </div>
                         </td>
                         <td className="py-3.5 px-5">
-                          <span className="block font-semibold text-slate-700">{e.designation?.title || 'Not Assigned'}</span>
-                          <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">{e.department?.name || 'No Dept'}</span>
+                          <span className="block font-semibold text-slate-700">
+                            {e.designation?.title || (e.user?.role ? e.user.role.replace('_', ' ') : 'Not Assigned')}
+                          </span>
+                          <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                            {e.user?.role === 'SUPER_ADMIN' ? 'ROOT CONTROL' : (e.department?.name || 'No Dept')}
+                          </span>
                         </td>
                         <td className="py-3.5 px-5 font-medium text-slate-600">{e.employmentType}</td>
                         <td className="py-3.5 px-5">
