@@ -7,6 +7,7 @@ export function formatName(nameStr: string | null | undefined): string {
   if (!nameStr) return '';
   const username = nameStr.includes('@') ? nameStr.split('@')[0] : nameStr;
   return username
+    .replace(/[0-9]/g, '')
     .replace(/[._-]/g, ' ')
     .split(/\s+/)
     .filter(Boolean)
@@ -22,7 +23,7 @@ export function formatName(nameStr: string | null | undefined): string {
  */
 export function splitEmailName(email: string | null | undefined): { firstName: string; lastName: string } {
   if (!email) return { firstName: 'Employee', lastName: 'User' };
-  const namePart = email.split('@')[0];
+  const namePart = email.split('@')[0].replace(/[0-9]/g, '');
   const parts = namePart.split(/[._-]/).filter(Boolean);
   if (parts.length >= 2) {
     const firstName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
